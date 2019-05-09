@@ -12,12 +12,20 @@ using std::min;
 
 UDPSocket udp(SOCKET_FILE);
 
+// 阻塞接收 UDP 数据包直到收到指定类型的数据包
+bool recv(msgpack& pack, enum msg_type type) {
+    do{
+        if(!udp.recv(pack)) return false;
+    }while(pack.type != type);
+    return true;
+}
+
 /*
 -	编译并执行 Task
 	[makefile_path]	make pipe
 	[exe_path]		待执行路径
 */
-void make(const string& makefile_path, const string& exe_path){
+void make(const string& makefile_path, const string& exe_path) {
 	string cmd = "make -f " + makefile_path;
 	system(cmd.c_str());
 	cmd = "./" + exe_path + "&";
@@ -25,32 +33,18 @@ void make(const string& makefile_path, const string& exe_path){
 }
 
 /*
--	创建共享内存区
-	[shm_id]	ID
-	[size]		大小
-*/
-void* create_shm(int shm_id, size_t size){
-	int hShm = shmget(shm_id, size, IPC_CREAT | 0666);
-	if(hShm == -1)  return nullptr;
-	else            return shmat(hShm, NULL, 0);
-}
-void* shm_ptr = nullptr;
-
-/*
 -	创建 Task 进程
 */
-bool init_process(){
+bool init_process() {
 	if(!udp.initialize())
 		return false;
 	msgpack pack;
 
 	make("makefile_stub.txt", "client_stub");
-	if(!udp.recv(pack) || pack.type != SET_SHM_ID){
+	if(!recv(pack, HELLO)) {
 		return false;
-	}else{
-		shm_ptr = create_shm(pack.shm_id, SHM_BUF_SIZE);
-		udp.send(msgpack(INIT_DONE));
-		return shm_ptr != nullptr;
+	} else {
+		return true;
 	}
 }
 
@@ -60,19 +54,17 @@ bool init_process(){
 	[size]		数据大小
 */
 void transfer_data(void* ptr_void, size_t size){
-	msgpack pack;
-	char* ptr = (char*)ptr_void;
+	int shm_id = time(NULL);
+	void* shm_ptr = create_shm(shm_id, size);
+	memcpy(shm_ptr, ptr_void, size);
 
-	size_t rem = size, once;
-	while(rem){
-		pack.data_size = min((size_t)SHM_BUF_SIZE, rem);
-		memcpy(shm_ptr, ptr, pack.data_size);
-		rem -= pack.data_size;
-		ptr += pack.data_size;
-		pack.type = rem ? TRANS_RUNNING : TRANS_FINISHED;
-		udp.send(pack);
-		while(pack.type != TRANS_COMMIT)	udp.recv(pack);
-	}
+	msgpack pack(REQUEST_DONE);
+	pack.shm_id = shm_id;
+	pack.shm_size = size;
+	udp.send(pack);
+	recv(pack, TRANS_DONE);
+	unmap_shm(shm_ptr);
+	del_shm(shm_id);
 }
 
 /*
