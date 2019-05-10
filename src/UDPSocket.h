@@ -54,12 +54,12 @@ public:
     }
 
     template<typename T>
-    bool send(T data){
+    bool send(T data) {
         return this->send(&data, sizeof(data));
     }
 
     template<typename T>
-    bool recv(T& data){
+    bool recv(T& data) {
         return this-recv(&data, sizeof(data));
     }
 

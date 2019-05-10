@@ -28,3 +28,41 @@
         [return] : 连接的 fd, -1 为失败
 ================================
 */
+#ifndef TCPSocket_H_
+#define TCPSocket_H_
+#include "headers.h"
+
+class TCPSocket {
+private:
+    const char *server_IP;
+    struct sockaddr_in server_addr, client_addr;
+    int fd, port;
+    bool is_server;
+
+    bool init();
+    bool init_server();
+    bool init_client();
+public:
+    TCPSocket() {}
+    TCPSocket(int port) : 
+        is_server(true), port(port) {}
+    TCPSocket(const char* server_IP, int port) :
+        is_server(false), port(port), server_IP(server_IP) {}
+    
+    template<typename T>
+    bool send(T data, int fd = -1) {
+        if(!this->is_server)    fd = this->fd;
+        return ::send(fd, &data, sizeof(data), 0) != -1;
+    }
+
+    template<typename T>
+    bool recv(T& data, int fd = -1) {
+        if(!this->is_server)    fd = this->fd;
+        return ::recv(fd, &data, sizeof(data), 0);
+    }
+
+    int accept();
+    bool initialize();
+};
+
+#endif
