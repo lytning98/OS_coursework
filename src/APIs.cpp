@@ -20,7 +20,7 @@ bool API::recv(msgpack& pack, enum msg_type type) {
 -	API: 初始化：与 ServerGuard 的通信
 */
 bool API::initialize() {
-    udp = UDPSocket(SOCKET_FILE, "clientfile");
+    udp = UDPSocket(SOCKET_FILE, SOCKET_CLIENT_FILE);
     if(!udp.initialize() || !udp.send(msgpack(HELLO)))
         return false;
     else

@@ -34,7 +34,8 @@ struct msgpack{
 };
 
 // 用于 UNIX 域 UDP 通信的 socket 文件
-const char* SOCKET_FILE = "socketf";
+const char* SOCKET_FILE = "socketf.socket";
+const char* SOCKET_CLIENT_FILE = "client.socket";
 // 用于在 ServerGuard 和 Task 之间交换数据的共享内存大小
 const int SHM_BUF_SIZE = 10240;
 
