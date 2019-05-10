@@ -1,1 +1,1 @@
-mv libAPI.so /lib
+cp libAPI.so /lib
