@@ -53,7 +53,7 @@ bool init_process() {
 	[ptr_void]	数据缓冲区指针
 	[size]		数据大小
 */
-void transfer_data(void* ptr_void, size_t size){
+void trans_to_task(void* ptr_void, size_t size) {
 	int shm_id = time(NULL);
 	void* shm_ptr = create_shm(shm_id, size);
 	memcpy(shm_ptr, ptr_void, size);
@@ -68,6 +68,17 @@ void transfer_data(void* ptr_void, size_t size){
 }
 
 /*
+-	从 Task 指定的共享内存区读取数据
+	[pack]	type 为 WRITE_NAMED_MEM 的 msgpack (payload 中含有共享内存区 ID 和大小信息)
+*/
+string trans_from_task(const msgpack& pack) {
+	void* shm_ptr = get_shm(pack.shm_id, pack.mem_size);
+	string data((const char*)shm_ptr, pack.mem_size);
+	unmap_shm(shm_ptr);
+	return data;
+}
+
+/*
 -	测试数据传输功能的桩代码
 	**debug**
 */
@@ -76,7 +87,7 @@ void stub_transfer_test(){
 	for(int i = 0; i < 4000; i++)	cksum ^= (res[i] = rand());
 	printf("[server]checksum %d\n", cksum);
 	printf("[server]size %ld\n", sizeof(res));
-	transfer_data(res, sizeof(res));
+	trans_to_task(res, sizeof(res));
 }
 
 /*
@@ -91,6 +102,10 @@ bool watch_process(){
 				return true;
 			case REQUEST_DATA:
 				stub_transfer_test();
+				break;
+			case CREATE_NAMED_MEM:
+				break;
+			case WRITE_NAMED_MEM:
 				break;
 		}
 	}

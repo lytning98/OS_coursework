@@ -7,27 +7,30 @@
 
 enum msg_type {
 	// ====== sender Task ======
-	REQUEST_DATA,		// payload : mem_name				请求有名内存区内的数据			
-	TRANS_DONE,			// payload : none					共享内存区中的数据已读取完毕		
-	QUIT,               // payload : none					执行结束							
-	CREATE_NAMED_MEM,	// payload : mem_name + mem_size	请求创建有名内存区				
+	REQUEST_DATA,		// payload : mem_name				请求有名内存区内的数据
+	QUIT,               // payload : none					执行结束
+	CREATE_NAMED_MEM,	// payload : mem_name + mem_size	请求创建有名内存区
+	WRITE_NAMED_MEM,	// payload : shm_id + shm_size		请求写入有名内存区		
+	TRANS_DONE,			// payload : none					共享内存区中的数据已读取完毕
 	// ====== sender ServerGuard ======
-	REQUEST_DONE,		// payload : shm_id + shm_size		请求数据已写入共享内存			
+	REQUEST_DONE,		// payload : shm_id + shm_size		请求数据已写入共享内存
+	RESULTS,			// payload : errcode				操作完成返回结果
 	// ====== BOTH ============
-	HELLO				// payload : none					用于设置服务器端的客户端地址		
+	HELLO,				// payload : none					用于设置服务器端的客户端地址
 };
 
 struct msgpack{
 	enum msg_type type;
 	msgpack(enum msg_type type = QUIT) : type(type) {}
 	// payload
-	union {	
-		struct {
-			int shm_id;
-			size_t shm_size;
-		};
+	union {
+		int shm_id;
 		char mem_name[32];
+		int errcode;
 	};
+	size_t _size;
+	#define mem_size _size
+	#define shm_size _size
 };
 
 // 用于 UNIX 域 UDP 通信的 socket 文件
