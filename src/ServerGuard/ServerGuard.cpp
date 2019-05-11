@@ -15,7 +15,7 @@ UDPSocket udp(SOCKET_FILE);
 TCPSocket tcp;
 
 // 阻塞接收 UDP 数据包直到收到指定类型的数据包
-bool recv(msgpack& pack, enum msg_type type) {
+bool recv(msgpack& pack, UDPMsg type) {
     do{
         if(!udp.recv(pack)) return false;
     }while(pack.type != type);
@@ -43,7 +43,7 @@ bool init_process() {
 	msgpack pack;
 
 	make("makefile_stub.txt", "client_stub");
-	if(!recv(pack, HELLO)) {
+	if(!recv(pack, UDPMsg::HELLO)) {
 		return false;
 	} else {
 		return true;
@@ -60,11 +60,11 @@ void trans_to_task(void* ptr_void, size_t size) {
 	void* shm_ptr = create_shm(shm_id, size);
 	memcpy(shm_ptr, ptr_void, size);
 
-	msgpack pack(REQUEST_DONE);
+	msgpack pack(UDPMsg::REQUEST_DONE);
 	pack.shm_id = shm_id;
 	pack.shm_size = size;
 	udp.send(pack);
-	recv(pack, TRANS_DONE);
+	recv(pack, UDPMsg::TRANS_DONE);
 	unmap_shm(shm_ptr);
 	del_shm(shm_id);
 }
@@ -100,14 +100,14 @@ bool watch_process(){
 
 	while(udp.recv(pack)){
 		switch(pack.type){
-			case QUIT:
+			case UDPMsg::QUIT:
 				return true;
-			case REQUEST_DATA:
+			case UDPMsg::REQUEST_DATA:
 				stub_transfer_test();
 				break;
-			case CREATE_NAMED_MEM:
+			case UDPMsg::CREATE_NAMED_MEM:
 				break;
-			case WRITE_NAMED_MEM:
+			case UDPMsg::WRITE_NAMED_MEM:
 				break;
 		}
 	}
@@ -128,7 +128,7 @@ int main(int argc, char** argv){
 	}
 	
 	
-	if(!init_process() || !watch_process()){
-		perror("server ERROR");
-	}
+	// if(!init_process() || !watch_process()){
+	// 	perror("server ERROR");
+	// }
 }

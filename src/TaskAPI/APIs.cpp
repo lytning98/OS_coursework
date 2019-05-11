@@ -9,7 +9,7 @@
 #include "APIs.h"
 
 // 阻塞接收 UDP 数据包直到收到指定类型的数据包
-bool API::recv(msgpack& pack, enum msg_type type) {
+bool API::recv(msgpack& pack, UDPMsg type) {
     do{
         if(!udp.recv(pack)) return false;
     }while(pack.type != type);
@@ -21,7 +21,7 @@ bool API::recv(msgpack& pack, enum msg_type type) {
 */
 bool API::initialize() {
     udp = UDPSocket(SOCKET_FILE, SOCKET_CLIENT_FILE);
-    if(!udp.initialize() || !udp.send(msgpack(HELLO)))
+    if(!udp.initialize() || !udp.send(msgpack(UDPMsg::HELLO)))
         return false;
     else
         return true;
@@ -31,7 +31,7 @@ bool API::initialize() {
 -	API：通知 ServerGuard 运行完毕
 */
 void API::quit() {
-    udp.send(msgpack(QUIT));
+    udp.send(msgpack(UDPMsg::QUIT));
 }
 
 /*
@@ -39,14 +39,14 @@ void API::quit() {
     [data_name]     ID
 */
 std::string API::request_data(const char* mem_name) {
-    msgpack pack(REQUEST_DATA);
+    msgpack pack(UDPMsg::REQUEST_DATA);
     strcpy(pack.mem_name, mem_name);
     udp.send(pack);
-    recv(pack, REQUEST_DONE);
+    recv(pack, UDPMsg::REQUEST_DONE);
     void* shm_ptr = get_shm(pack.shm_id, pack.shm_size);
     std::string buffer((const char*)shm_ptr, pack.shm_size);
     unmap_shm(shm_ptr);
-    udp.send(msgpack(TRANS_DONE));
+    udp.send(msgpack(UDPMsg::TRANS_DONE));
     return buffer;
 }
 
@@ -56,10 +56,10 @@ std::string API::request_data(const char* mem_name) {
 	[return]		成功(0)或错误代码
 */
 int API::create_named_mem(const char* mem_name, size_t size) {
-    msgpack pack(CREATE_NAMED_MEM);
+    msgpack pack(UDPMsg::CREATE_NAMED_MEM);
     strcpy(pack.mem_name, mem_name);
     udp.send(pack);
-    recv(pack, RESULTS);
+    recv(pack, UDPMsg::RESULTS);
     return pack.errcode;
 }
 
@@ -74,13 +74,13 @@ int API::write_named_mem(const char* mem_name, std::string data) {
     void* shm_ptr = create_shm(shm_id, data.size());
     memcpy(shm_ptr, (const void*)data.c_str(), data.size());
 
-    msgpack pack(WRITE_NAMED_MEM);
+    msgpack pack(UDPMsg::WRITE_NAMED_MEM);
     strcpy(pack.mem_name, mem_name);
     pack.mem_size = data.size();
     pack.shm_id = shm_id;
     udp.send(pack);
 
-    recv(pack, RESULTS);
+    recv(pack, UDPMsg::RESULTS);
     unmap_shm(shm_ptr);
     del_shm(shm_id);
     return pack.errcode;

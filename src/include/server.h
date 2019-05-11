@@ -5,7 +5,7 @@
 #ifndef server_H_
 #define server_H_
 
-enum msg_type {
+enum class UDPMsg {
 	// ====== sender Task ======
 	REQUEST_DATA,		// payload : mem_name				请求有名内存区内的数据
 	QUIT,               // payload : none					执行结束
@@ -20,8 +20,8 @@ enum msg_type {
 };
 
 struct msgpack{
-	enum msg_type type;
-	msgpack(enum msg_type type = QUIT) : type(type) {}
+	UDPMsg type;
+	msgpack(UDPMsg type = UDPMsg::QUIT) : type(type) {}
 	// payload
 	union {
 		int shm_id;

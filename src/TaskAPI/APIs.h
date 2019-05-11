@@ -13,7 +13,7 @@ class API {
 private:
 	UDPSocket udp;
 	void* shm_ptr;
-	bool recv(msgpack& pack, enum msg_type type);
+	bool recv(msgpack& pack, UDPMsg type);
 
 public:
 	// 初始化：与 ServerGuard 的通信, 初始化共享内存
