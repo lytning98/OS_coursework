@@ -6,11 +6,13 @@
 #include "headers.h"
 #include "server.h"
 #include "UDPSocket.h"
+#include "TCPSocket.h"
 
 using std::string;
 using std::min;
 
 UDPSocket udp(SOCKET_FILE);
+TCPSocket tcp;
 
 // 阻塞接收 UDP 数据包直到收到指定类型的数据包
 bool recv(msgpack& pack, enum msg_type type) {
@@ -114,10 +116,19 @@ bool watch_process(){
 }
 
 int main(int argc, char** argv){
-	/*
-		TCP sth
-	*/
-   if(!init_process() || !watch_process()){
-	   perror("server ERROR");
-   }
+	if(argc != 3) {
+		printf("TaskManager address is not specified. Running in local mode (127.0.0.1:9412).");
+		tcp = TCPSocket("127.0.0.1", 9412);
+	} else {
+		tcp = TCPSocket(argv[1], atoi(argv[2]));
+	}
+	if(!tcp.initialize()) {
+		perror("TCP Socket initializing failed : ");
+		return -1;
+	}
+	
+	
+	if(!init_process() || !watch_process()){
+		perror("server ERROR");
+	}
 }

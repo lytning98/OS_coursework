@@ -63,6 +63,7 @@ public:
 
     int accept();
     bool initialize();
+    const char* get_client_IP();
 };
 
 #endif

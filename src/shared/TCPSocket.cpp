@@ -28,3 +28,7 @@ int TCPSocket::accept() {
     if(!this->is_server)    return -1;
     return ::accept(this->fd, (struct sockaddr*)&this->client_addr, &len);
 }
+
+const char* TCPSocket::get_client_IP() {
+    return inet_ntoa(this->client_addr.sin_addr);
+}
