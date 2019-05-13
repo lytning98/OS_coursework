@@ -6,6 +6,8 @@
 #include <sys/shm.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include <cstdio>
 #include <cstring>
@@ -14,3 +16,6 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <fstream>
+#include <unordered_map>
+#include <thread>

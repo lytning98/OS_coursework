@@ -17,8 +17,14 @@ bool UDPSocket::init_server() {
 bool UDPSocket::init_client() {
     this->client_addr.sun_family = AF_UNIX;
     strcpy(this->client_addr.sun_path, this->client_file);
-    return this->init() &&
-        (bind(this->fd, (struct sockaddr*)&this->client_addr, sizeof(this->client_addr)) != -1);
+    if(!this->init()) {
+        printf("Init server socket file failed.\n");
+        return false;
+    } else if(bind(this->fd, (struct sockaddr*)&this->client_addr, sizeof(this->client_addr)) == -1) {
+        printf("Init socket (bind) failed.\n");
+        return false;
+    }
+    return true;
 }
 
 bool UDPSocket::initialize() {

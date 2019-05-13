@@ -1,3 +1,4 @@
 build/*
 *.socket
 _test_*
+tmp.*

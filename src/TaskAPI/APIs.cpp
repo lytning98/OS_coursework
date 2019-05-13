@@ -20,11 +20,22 @@ bool API::recv(msgpack& pack, UDPMsg type) {
 -	API: 初始化：与 ServerGuard 的通信
 */
 bool API::initialize() {
+    // std::string socket_path = std::string("../") + std::string(SOCKET_FILE);
+    // std::string client_path = std::string("../") + std::string(SOCKET_CLIENT_FILE);
+    // udp = UDPSocket(socket_path.c_str(), client_path.c_str());
     udp = UDPSocket(SOCKET_FILE, SOCKET_CLIENT_FILE);
-    if(!udp.initialize() || !udp.send(msgpack(UDPMsg::HELLO)))
+    if(!udp.initialize()) {
+        printf("Initializing failed.\n");
         return false;
-    else
-        return true;
+    } else {
+        errno = 0;
+        if(!udp.send(msgpack(UDPMsg::HELLO))) {
+            printf("Initial message sending failed.\n");
+            return false;
+        } else {
+            return true;
+        }
+    }
 }
 
 /*
@@ -42,6 +53,10 @@ std::string API::request_data(const char* mem_name) {
     msgpack pack(UDPMsg::REQUEST_DATA);
     strcpy(pack.mem_name, mem_name);
     udp.send(pack);
+    recv(pack, UDPMsg::RESULTS);
+    if(pack.errcode) {
+        return "";
+    }
     recv(pack, UDPMsg::REQUEST_DONE);
     void* shm_ptr = get_shm(pack.shm_id, pack.shm_size);
     std::string buffer((const char*)shm_ptr, pack.shm_size);

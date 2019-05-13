@@ -52,12 +52,14 @@ public:
     template<typename T>
     bool send(T data, int fd = -1) {
         if(!this->is_server)    fd = this->fd;
+        assert(fd != -1);
         return ::send(fd, &data, sizeof(data), 0) != -1;
     }
 
     template<typename T>
     bool recv(T& data, int fd = -1) {
         if(!this->is_server)    fd = this->fd;
+        assert(fd != -1);
         return ::recv(fd, &data, sizeof(data), 0);
     }
 

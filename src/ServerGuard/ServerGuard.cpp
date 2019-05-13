@@ -7,6 +7,7 @@
 #include "server.h"
 #include "UDPSocket.h"
 #include "TCPSocket.h"
+#include "TCPShared.h"
 
 using std::string;
 using std::min;
@@ -14,12 +15,20 @@ using std::min;
 UDPSocket udp(SOCKET_FILE);
 TCPSocket tcp;
 
-// 阻塞接收 UDP 数据包直到收到指定类型的数据包
-bool recv(msgpack& pack, UDPMsg type) {
-    do{
-        if(!udp.recv(pack)) return false;
-    }while(pack.type != type);
-    return true;
+template <typename... Args>
+void systemf(const char* format, Args... args) {
+	static char temp[100];
+	sprintf(temp, format, args...);
+	system(temp);
+}
+
+// 阻塞接收 UDP/TCP 数据包直到收到指定类型的数据包
+template <typename Socket, typename Packet, typename Type>
+bool recv(Socket& socket, Packet& pack, Type type) {
+	do {
+		if(!socket.recv(pack))	return false;
+	} while(pack.type != type);
+	return true;
 }
 
 /*
@@ -37,13 +46,31 @@ void make(const string& makefile_path, const string& exe_path) {
 /*
 -	创建 Task 进程
 */
-bool init_process() {
-	if(!udp.initialize())
+bool init_process(const char* filename) {
+	if(access("tmp", 0) < 0) {
+		mkdir("tmp", 0666);
+	}
+	string path = string("tmp/") + string(filename);
+	int fd = open(path.c_str(), O_WRONLY | O_CREAT, 0666);
+	if(fd < 0) {
+		printf("Cannot open file [%s].\n", path.c_str());
 		return false;
+	}
+	filepacket data;
+	do {
+		if(!tcp.recv(data))	return false;
+		write(fd, data.content, data.len);
+	} while(!data.finished);
+	close(fd);
+	printf("Received task file. Saved temporarily as [%s].\n", path.c_str());
+	systemf("unzip %s -d tmp", path.c_str());
+	printf("Package unziped.\n");
+	chdir("tmp");
+	make("makefile", "client_stub");
+	chdir("..");
 	msgpack pack;
-
-	make("makefile_stub.txt", "client_stub");
-	if(!recv(pack, UDPMsg::HELLO)) {
+	if(!recv(udp, pack, UDPMsg::HELLO)) {
+		perror("recv hello message failed");
 		return false;
 	} else {
 		return true;
@@ -55,7 +82,7 @@ bool init_process() {
 	[ptr_void]	数据缓冲区指针
 	[size]		数据大小
 */
-void trans_to_task(void* ptr_void, size_t size) {
+bool trans_to_task(const void* ptr_void, size_t size) {
 	int shm_id = time(NULL);
 	void* shm_ptr = create_shm(shm_id, size);
 	memcpy(shm_ptr, ptr_void, size);
@@ -63,10 +90,14 @@ void trans_to_task(void* ptr_void, size_t size) {
 	msgpack pack(UDPMsg::REQUEST_DONE);
 	pack.shm_id = shm_id;
 	pack.shm_size = size;
-	udp.send(pack);
-	recv(pack, UDPMsg::TRANS_DONE);
+	if(!udp.send(pack)) {
+		perror("send REQEUST_DONE to client error");
+		return false;
+	}
+	recv(udp, pack, UDPMsg::TRANS_DONE);
 	unmap_shm(shm_ptr);
 	del_shm(shm_id);
+	return true;
 }
 
 /*
@@ -92,20 +123,58 @@ void stub_transfer_test(){
 	trans_to_task(res, sizeof(res));
 }
 
+void handle_request_data(const msgpack& _pack) {
+	printf("task reqeusts data %s\n", _pack.mem_name);
+	packet tcp_pack;
+	msgpack pack;
+
+	tcp_pack.type = TCPMsg::REQUEST_DATA;
+	strcpy(tcp_pack.mem_name, _pack.mem_name);
+	tcp.send(tcp_pack);
+
+	recv(tcp, tcp_pack, TCPMsg::RESULTS);
+	pack.type = UDPMsg::RESULTS;
+	pack.errcode = tcp_pack.errcode;
+	udp.send(pack);
+	if(tcp_pack.errcode) {
+		return;
+	}
+	
+	string data;
+	filepacket file;
+	do {
+		tcp.recv(file);
+		data.append(file.content, file.len);
+	} while(!file.finished);
+	trans_to_task(data.c_str(), data.size());
+	printf("sent requested data.");
+}
+
 /*
 -	监控 Task 进程的主过程, 处理请求
 */
 bool watch_process(){
 	msgpack pack;
+	packet tcp_pack;
 
 	while(udp.recv(pack)){
 		switch(pack.type){
 			case UDPMsg::QUIT:
+				tcp.send(packet(TCPMsg::TASK_DONE));
 				return true;
 			case UDPMsg::REQUEST_DATA:
-				stub_transfer_test();
+				handle_request_data(pack);
+				// stub_transfer_test();
 				break;
 			case UDPMsg::CREATE_NAMED_MEM:
+				tcp_pack.type = TCPMsg::CREATE_NAMED_MEM;
+				strcpy(tcp_pack.mem_name, pack.mem_name);
+				tcp_pack.mem_size = pack.mem_size;
+				tcp.send(tcp_pack);
+				recv(tcp, tcp_pack, TCPMsg::RESULTS);
+				pack.type = UDPMsg::RESULTS;
+				pack.errcode = tcp_pack.errcode;
+				udp.send(pack);
 				break;
 			case UDPMsg::WRITE_NAMED_MEM:
 				break;
@@ -115,20 +184,49 @@ bool watch_process(){
 	return false;
 }
 
-int main(int argc, char** argv){
-	if(argc != 3) {
-		printf("TaskManager address is not specified. Running in local mode (127.0.0.1:9412).");
-		tcp = TCPSocket("127.0.0.1", 9412);
-	} else {
-		tcp = TCPSocket(argv[1], atoi(argv[2]));
+void watch_manager() {
+	packet pack;
+	while(true) {
+		tcp.recv(pack);
+		switch(pack.type) {
+			case TCPMsg::NEW_TASK:
+				printf("Assigned new task : %s\n", pack.filename);
+				init_process(pack.filename);
+				watch_process();
+				printf("Task %s done.\n", pack.filename);
+				break;
+		}
 	}
-	if(!tcp.initialize()) {
-		perror("TCP Socket initializing failed : ");
+}
+
+bool stub_init_process() {
+	msgpack pack;
+
+	make("makefile", "client_stub");
+	if(!recv(udp, pack, UDPMsg::HELLO)) {
+		return false;
+	} else {
+		return true;
+	}
+}
+
+int main(int argc, char** argv){
+	if(argc == 3) {
+		tcp = TCPSocket(argv[1], atoi(argv[2]));
+	} else {
+		printf("TaskManager address is not specified. Running in local mode (127.0.0.1:9412).\n");
+		tcp = TCPSocket("127.0.0.1", 9412);
+	}
+
+	if(!udp.initialize()) {
+		perror("UDP Socket initializing failed");
 		return -1;
 	}
-	
-	
-	// if(!init_process() || !watch_process()){
-	// 	perror("server ERROR");
-	// }
+	if(!tcp.initialize()) {
+		perror("TCP Socket initializing failed");
+		return -1;
+	}
+	// stub_init_process();
+	// watch_process();
+	watch_manager();
 }
