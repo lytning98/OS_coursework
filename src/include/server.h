@@ -28,9 +28,10 @@ struct msgpack{
 		char mem_name[64];
 		int errcode;
 	};
-	size_t _size;
-	#define mem_size _size
-	#define shm_size _size
+	union {
+		size_t mem_size;
+		size_t shm_size;
+	};
 };
 
 // 用于 UNIX 域 UDP 通信的 socket 文件
