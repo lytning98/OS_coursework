@@ -32,10 +32,11 @@ public:
 	int create_named_mem(const char* mem_name, size_t size);
 
 	/*	通过 ServerGuard 向有名内存区写入数据
-		[mem_name]     数据区名                 
-		[data]         数据
-		[return]		成功(0)或错误代码		*/
-	int write_named_mem(const char* mem_name, std::string data);
+    [mem_name]     数据区名                 
+    [data]         数据
+    [size]          写入大小
+    [return]		成功(0)或错误代码			*/
+	int write_named_mem(const char* mem_name, const void* data, size_t size);
 };
 
 #endif

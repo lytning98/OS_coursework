@@ -9,7 +9,6 @@
 #include "TaskManager/ObjectManager.h"
 
 using std::string;
-using std::min;
 using OM = ObjectManager;
 
 extern TCPSocket tcp;
@@ -35,16 +34,7 @@ void Server::request_data(const packet& pack) {
         ret.errcode = 0;
         tcp.send(ret, this->fd);
         string data = OM::get_mem(pack.mem_name);
-        filepacket file;
-        size_t sent = 0, trans;
-        while(sent < data.size()) {
-            trans = min((size_t)MAX_FILEPACK_LEN, data.size()-sent);
-            memcpy(file.content, data.c_str() + sent, trans);
-            sent += trans;
-            file.finished = (sent == data.size());
-            file.len = trans;
-            tcp.send(file, this->fd);
-        }
+        tcp.send_large_data(data, this->fd);
     }
 }
 
@@ -66,6 +56,9 @@ void Server::watch() {
                 break;
             case TCPMsg::CREATE_NAMED_MEM :
                 this->create_named_mem(pack);
+                break;
+            case TCPMsg::WRITE_NAMED_MEM :
+                // this->write_named_mem(pack);
                 break;
         }
     }
@@ -90,8 +83,7 @@ bool Server::launch(const char* filepath) {
 
     filepacket file_pack;
     while(file_pack.len = in.readsome(file_pack.content, MAX_FILEPACK_LEN)) {
-        if(in.peek() == EOF)    file_pack.finished = true;
-        else    file_pack.finished = false;
+        file_pack.finished = (in.peek() == EOF);
         tcp.send(file_pack, this->fd);
     }
     return true;

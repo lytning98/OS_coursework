@@ -1,4 +1,9 @@
+#include "headers.h"
 #include "TCPSocket.h"
+#include "TCPShared.h"
+
+using std::string;
+using std::min;
 
 bool TCPSocket::init() {
     this->server_addr.sin_family = AF_INET;
@@ -31,4 +36,34 @@ int TCPSocket::accept() {
 
 const char* TCPSocket::get_client_IP() {
     return inet_ntoa(this->client_addr.sin_addr);
+}
+
+string TCPSocket::recv_large_data(int fd) {
+    if(!this->is_server)    fd = this->fd;
+    assert(fd != -1);
+
+	string data;
+	filepacket file;
+	do {
+		if(!this->recv(file, fd)) return "";
+		data.append(file.content, file.len);
+	} while(!file.finished);
+    return data;
+}
+
+bool TCPSocket::send_large_data(const string& data, int fd) {
+    if(!this->is_server)    fd = this->fd;
+    assert(fd != -1);
+
+    filepacket file;
+    size_t sent = 0, trans;
+    while(sent < data.size()) {
+        trans = min((size_t)MAX_FILEPACK_LEN, data.size()-sent);
+        memcpy(file.content, data.c_str() + sent, trans);
+        sent += trans;
+        file.finished = (sent == data.size());
+        file.len = trans;
+        if(!this->send(file, fd))   return false;
+    }
+    return true;
 }

@@ -6,9 +6,10 @@
 
 enum class TCPMsg {
 	// ====== sender ServerGuard ======
-    REQUEST_DATA,       // payload : 
+    REQUEST_DATA,       // payload : mem_name
     TASK_DONE,          // payload : none
     CREATE_NAMED_MEM,   // payload : mem_name + mem_size
+    WRITE_NAMED_MEM,    // payload : mem_name + size_towirte
     // ====== sender TaskManager ======
     NEW_TASK,           // payload : none;
     RESULTS,            // payload : errcode
@@ -23,7 +24,10 @@ struct packet {
         char filename[128];
         struct {
             char mem_name[64];
-            size_t mem_size;
+            union {
+                size_t mem_size;
+                size_t size_towrite;
+            };
         };
         int errcode;
     };

@@ -20,9 +20,6 @@ bool API::recv(msgpack& pack, UDPMsg type) {
 -	API: 初始化：与 ServerGuard 的通信
 */
 bool API::initialize() {
-    // std::string socket_path = std::string("../") + std::string(SOCKET_FILE);
-    // std::string client_path = std::string("../") + std::string(SOCKET_CLIENT_FILE);
-    // udp = UDPSocket(socket_path.c_str(), client_path.c_str());
     udp = UDPSocket(SOCKET_FILE, SOCKET_CLIENT_FILE);
     if(!udp.initialize()) {
         printf("Initializing failed.\n");
@@ -83,16 +80,17 @@ int API::create_named_mem(const char* mem_name, size_t size) {
 -   通过 ServerGuard 向有名内存区写入数据
     [mem_name]     数据区名                 
     [data]         数据
+    [size]          写入大小
     [return]		成功(0)或错误代码
 */
-int API::write_named_mem(const char* mem_name, std::string data) {
+int API::write_named_mem(const char* mem_name, const void* data, size_t size) {
     int shm_id = time(NULL);
-    void* shm_ptr = create_shm(shm_id, data.size());
-    memcpy(shm_ptr, (const void*)data.c_str(), data.size());
+    void* shm_ptr = create_shm(shm_id, size);
+    memcpy(shm_ptr, data, size);
 
     msgpack pack(UDPMsg::WRITE_NAMED_MEM);
     strcpy(pack.mem_name, mem_name);
-    pack.mem_size = data.size();
+    pack.mem_size = size;
     pack.shm_id = shm_id;
     udp.send(pack);
 

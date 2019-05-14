@@ -7,11 +7,11 @@
 
 enum class UDPMsg {
 	// ====== sender Task ======
-	REQUEST_DATA,		// payload : mem_name				请求有名内存区内的数据
-	QUIT,               // payload : none					执行结束
-	CREATE_NAMED_MEM,	// payload : mem_name + mem_size	请求创建有名内存区
-	WRITE_NAMED_MEM,	// payload : shm_id + shm_size		请求写入有名内存区		
-	TRANS_DONE,			// payload : none					共享内存区中的数据已读取完毕
+	REQUEST_DATA,		// payload : mem_name						请求有名内存区内的数据
+	QUIT,               // payload : none							执行结束
+	CREATE_NAMED_MEM,	// payload : mem_name + mem_size			请求创建有名内存区
+	WRITE_NAMED_MEM,	// payload : mem_name + shm_id + shm_size	请求写入有名内存区		
+	TRANS_DONE,			// payload : none							共享内存区中的数据已读取完毕
 	// ====== sender ServerGuard ======
 	REQUEST_DONE,		// payload : shm_id + shm_size		请求数据已写入共享内存
 	RESULTS,			// payload : errcode				操作完成返回结果
@@ -23,11 +23,9 @@ struct msgpack{
 	UDPMsg type;
 	msgpack(UDPMsg type = UDPMsg::QUIT) : type(type) {}
 	// payload
-	union {
-		int shm_id;
-		char mem_name[64];
-		int errcode;
-	};
+	int shm_id;
+	char mem_name[64];
+	int errcode;
 	union {
 		size_t mem_size;
 		size_t shm_size;

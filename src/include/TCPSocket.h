@@ -66,6 +66,9 @@ public:
     int accept();
     bool initialize();
     const char* get_client_IP();
+    
+    std::string recv_large_data(int fd = -1);
+    bool send_large_data(const std::string& data, int fd = -1);
 };
 
 #endif

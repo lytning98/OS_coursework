@@ -123,8 +123,12 @@ void stub_transfer_test(){
 	trans_to_task(res, sizeof(res));
 }
 
+/*
+-	处理 Task 获取数据的请求
+	[pack]	type 为 REQUEST_DATA 的 msgpack (payload 中含有共享内存区名信息)
+*/
 void handle_request_data(const msgpack& _pack) {
-	printf("task reqeusts data %s\n", _pack.mem_name);
+	printf("task reqeusts data [%s].\n", _pack.mem_name);
 	packet tcp_pack;
 	msgpack pack;
 
@@ -140,14 +144,32 @@ void handle_request_data(const msgpack& _pack) {
 		return;
 	}
 	
-	string data;
-	filepacket file;
-	do {
-		tcp.recv(file);
-		data.append(file.content, file.len);
-	} while(!file.finished);
+	string data = tcp.recv_large_data();
 	trans_to_task(data.c_str(), data.size());
-	printf("sent requested data.");
+}
+
+void handle_create_named_mem(const msgpack& _pack) {
+	packet tcp_pack;
+	tcp_pack.type = TCPMsg::CREATE_NAMED_MEM;
+	strcpy(tcp_pack.mem_name, _pack.mem_name);
+	tcp_pack.mem_size = _pack.mem_size;
+	tcp.send(tcp_pack);
+	recv(tcp, tcp_pack, TCPMsg::RESULTS);
+
+	msgpack pack;
+	pack.type = UDPMsg::RESULTS;
+	pack.errcode = tcp_pack.errcode;
+	udp.send(pack);
+}
+
+void handle_write_named_mem(const msgpack& _pack) {
+	string data = trans_from_task(_pack);
+	packet tcp_pack;
+	tcp_pack.type = TCPMsg::WRITE_NAMED_MEM;
+	strcpy(tcp_pack.mem_name, _pack.mem_name);
+	tcp_pack.size_towrite = _pack.mem_size;
+	tcp.send(tcp_pack);
+
 }
 
 /*
@@ -155,7 +177,6 @@ void handle_request_data(const msgpack& _pack) {
 */
 bool watch_process(){
 	msgpack pack;
-	packet tcp_pack;
 
 	while(udp.recv(pack)){
 		switch(pack.type){
@@ -167,14 +188,7 @@ bool watch_process(){
 				// stub_transfer_test();
 				break;
 			case UDPMsg::CREATE_NAMED_MEM:
-				tcp_pack.type = TCPMsg::CREATE_NAMED_MEM;
-				strcpy(tcp_pack.mem_name, pack.mem_name);
-				tcp_pack.mem_size = pack.mem_size;
-				tcp.send(tcp_pack);
-				recv(tcp, tcp_pack, TCPMsg::RESULTS);
-				pack.type = UDPMsg::RESULTS;
-				pack.errcode = tcp_pack.errcode;
-				udp.send(pack);
+				handle_create_named_mem(pack);
 				break;
 			case UDPMsg::WRITE_NAMED_MEM:
 				break;

@@ -60,7 +60,7 @@ void printer() {
                 printf_msg("creator: #%-2d, size: %8luB, name: %s", 0, kv.second, kv.first.c_str());
                 tot_size += kv.second;
             }
-            printf_msg("total memory blocks: %d, total size %lu", res.size(), tot_size);
+            printf_msg("total memory blocks: %d, total size %luB", res.size(), tot_size);
             fflush(stdout);
         }
         sleep(1);

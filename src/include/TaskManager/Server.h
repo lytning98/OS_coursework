@@ -33,6 +33,7 @@ private:
     void watch();
     void create_named_mem(const packet& pack);
     void request_data(const packet& pack);
+    void write_named_mem(const packet& pack);
 
 public:
     static int id_top;
