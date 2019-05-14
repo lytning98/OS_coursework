@@ -27,7 +27,8 @@ public:
 	
 	/*	通过 ServerGuard 创建有名内存区
 		[mem_name]     数据区名
-		[return]		成功(0)或错误代码		*/
+		[return]		成功(0)或错误代码		
+		[errcode]		1: 指定名称已存在		*/
 	int create_named_mem(const char* mem_name, size_t size);
 
 	/*	通过 ServerGuard 向有名内存区写入数据

@@ -3,9 +3,12 @@
 #include "TCPShared.h"
 #include "terminal.h"
 #include "TaskManager/Server.h"
+#include "TaskManager/ObjectManager.h"
+
+using std::string;
+using OM = ObjectManager;
 
 TCPSocket tcp;
-using std::string;
 
 std::vector<Server> servers;
 
@@ -24,8 +27,16 @@ bool launch_task(const char* filepath) {
             server = &s;
         }
     }
-    if(!server) return false;
-    return server->launch(filepath);
+    if(!server) {
+        printf_msg("No available server!");
+        return false;
+    }
+    if(!server->launch(filepath)) {
+        server->busy = false;
+        return false;
+    } else {
+        return true;
+    }
 }
 
 bool _run_printing = true;
@@ -39,9 +50,17 @@ void printer() {
             } else {
                 timecount = 0;
                 for(const auto& s: servers) {
-                    printf_msg("[%s]  online=%d  busy=%d  task=%-15s", s.IP.c_str(), s.online, s.busy, s.task_name.c_str());
+                    printf_msg("#%-2d [%s]  online=%d  busy=%d  task=%-15s", s.id, s.IP.c_str(), s.online, s.busy, s.task_name.c_str());
                 }
             }
+            printf_msg("");
+            auto res = OM::get_mem_keysize();
+            size_t tot_size = 0;
+            for(const auto& kv: res) {
+                printf_msg("creator: #%-2d, size: %8luB, name: %s", 0, kv.second, kv.first.c_str());
+                tot_size += kv.second;
+            }
+            printf_msg("total memory blocks: %d, total size %lu", res.size(), tot_size);
             fflush(stdout);
         }
         sleep(1);
@@ -62,16 +81,24 @@ void CUI(int port) {
         } else if(ch == 'a') {
             _run_printing = false;
             move_cursor(3, 0);
-            printf_msg("Input [q] to cancel.");
+            printf_msg("Input task zip file path, or input [q] to cancel.");
             move_cursor(1, 0);
-            printf_msg("Enter info : ");
+            printf_msg("");
+            move_cursor(2, 0);
+            printf_msg("");
+            move_cursor(1, 0);
+            printf("\r");
             char cmd[100];
             show_cursor();
             scanf("%s", cmd);
             hide_cursor();
             if(!launch_task(cmd)) {
-                printf_msg("Launching task failed. Return in 5 seconds.");
-                sleep(5);
+                int time = 5;
+                while(time--) {
+                    move_cursor(3, 1);
+                    printf_msg("Launching task failed. Back in %d seconds.", time+1);
+                    sleep(1);
+                }
             }
             move_cursor(1, 0);
             printf_msg("Runing on port %d.", port);

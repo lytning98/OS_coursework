@@ -25,7 +25,7 @@ struct msgpack{
 	// payload
 	union {
 		int shm_id;
-		char mem_name[32];
+		char mem_name[64];
 		int errcode;
 	};
 	size_t _size;

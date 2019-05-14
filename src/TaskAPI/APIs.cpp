@@ -73,6 +73,7 @@ std::string API::request_data(const char* mem_name) {
 int API::create_named_mem(const char* mem_name, size_t size) {
     msgpack pack(UDPMsg::CREATE_NAMED_MEM);
     strcpy(pack.mem_name, mem_name);
+    pack.mem_size = size;
     udp.send(pack);
     recv(pack, UDPMsg::RESULTS);
     return pack.errcode;

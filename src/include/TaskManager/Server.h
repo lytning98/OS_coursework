@@ -8,6 +8,7 @@
         [fd] : TCP file descriptor
         [IP] : IP 地址
 ### Public members:
+    id : 自动分配的编号
     IP : IP 地址
     task_name : 正在执行的 Task
 ### Interfaces:
@@ -28,19 +29,20 @@ class Server {
 private:
     int fd;
     std::thread thread;
-    std::unordered_map<std::string, std::string> mem_map;
 
     void watch();
     void create_named_mem(const packet& pack);
     void request_data(const packet& pack);
 
 public:
+    static int id_top;
+    int id;
     std::string IP, task_name;
     bool busy = false, online = true;
 
     Server() {};
 
-    Server(int fd, const char* IP) : fd(fd) {
+    Server(int fd, const char* IP) : fd(fd), id(++id_top) {
         this->IP = std::string(IP);
         this->thread = std::thread([this]() -> void {this->watch();});
     }
