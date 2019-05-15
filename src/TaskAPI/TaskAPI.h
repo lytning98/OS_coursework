@@ -6,19 +6,13 @@
 #ifndef APIs_H_
 #define APIs_H_
 
-#include "headers.h"
-#include "server.h"
-#include "UDPSocket.h"
+#include <string>
 
-class API {
-private:
-	UDPSocket udp;
-	void* shm_ptr;
-	bool recv(msgpack& pack, UDPMsg type);
+namespace Task {
 
-public:
 	// 初始化：与 ServerGuard 的通信, 初始化共享内存
 	bool initialize();
+
 	// 通知 ServerGuard 运行完毕
 	void quit();
 
@@ -39,6 +33,7 @@ public:
     [return]		成功(0)或错误代码
 	[errcode]		1: 指定内存区不存在或过小; 2: ServerGuard 封包出错 (size 不一致); 3: TaskManager 写入出错 */
 	int write_named_mem(const char* mem_name, const void* data, size_t size);
+	
 };
 
 #endif

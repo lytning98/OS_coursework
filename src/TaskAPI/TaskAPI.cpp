@@ -6,17 +6,22 @@
 #include "headers.h"
 #include "server.h"
 #include "UDPSocket.h"
-#include "APIs.h"
+#include "TaskAPI.h"
+
+namespace Task {
+
+UDPSocket udp;
+void* shm_ptr;
 
 // 阻塞接收 UDP 数据包直到收到指定类型的数据包
-bool API::recv(msgpack& pack, UDPMsg type) {
+static bool recv(msgpack& pack, UDPMsg type) {
     do{
         if(!udp.recv(pack)) return false;
     }while(pack.type != type);
     return true;
 }
 
-bool API::initialize() {
+bool initialize() {
     udp = UDPSocket(SOCKET_FILE, SOCKET_CLIENT_FILE);
     if(!udp.initialize()) {
         printf("Initializing failed.\n");
@@ -32,11 +37,11 @@ bool API::initialize() {
     }
 }
 
-void API::quit() {
+void quit() {
     udp.send(msgpack(UDPMsg::QUIT));
 }
 
-std::string API::request_data(const char* mem_name) {
+std::string request_data(const char* mem_name) {
     msgpack pack(UDPMsg::REQUEST_DATA);
     strcpy(pack.mem_name, mem_name);
     udp.send(pack);
@@ -52,7 +57,7 @@ std::string API::request_data(const char* mem_name) {
     return buffer;
 }
 
-int API::create_named_mem(const char* mem_name, size_t size) {
+int create_named_mem(const char* mem_name, size_t size) {
     msgpack pack(UDPMsg::CREATE_NAMED_MEM);
     strcpy(pack.mem_name, mem_name);
     pack.mem_size = size;
@@ -61,7 +66,7 @@ int API::create_named_mem(const char* mem_name, size_t size) {
     return pack.errcode;
 }
 
-int API::write_named_mem(const char* mem_name, const void* data, size_t size) {
+int write_named_mem(const char* mem_name, const void* data, size_t size) {
     if(size == 0) {
         throw "Size of named memory blocks must be greater than zero.";
     }
@@ -79,3 +84,5 @@ int API::write_named_mem(const char* mem_name, const void* data, size_t size) {
     del_shm(shm_id);
     return pack.errcode;
 }
+
+} //end namespace
