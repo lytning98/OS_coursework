@@ -16,9 +16,6 @@ bool API::recv(msgpack& pack, UDPMsg type) {
     return true;
 }
 
-/*
--	API: 初始化：与 ServerGuard 的通信
-*/
 bool API::initialize() {
     udp = UDPSocket(SOCKET_FILE, SOCKET_CLIENT_FILE);
     if(!udp.initialize()) {
@@ -35,17 +32,10 @@ bool API::initialize() {
     }
 }
 
-/*
--	API：通知 ServerGuard 运行完毕
-*/
 void API::quit() {
     udp.send(msgpack(UDPMsg::QUIT));
 }
 
-/*
--	API：通过 ServerGuard 向 TaskManager 请求数据
-    [data_name]     ID
-*/
 std::string API::request_data(const char* mem_name) {
     msgpack pack(UDPMsg::REQUEST_DATA);
     strcpy(pack.mem_name, mem_name);
@@ -62,11 +52,6 @@ std::string API::request_data(const char* mem_name) {
     return buffer;
 }
 
-/*
--	通过 ServerGuard 创建有名内存区
-	[mem_name]     数据区名
-	[return]		成功(0)或错误代码
-*/
 int API::create_named_mem(const char* mem_name, size_t size) {
     msgpack pack(UDPMsg::CREATE_NAMED_MEM);
     strcpy(pack.mem_name, mem_name);
@@ -76,14 +61,10 @@ int API::create_named_mem(const char* mem_name, size_t size) {
     return pack.errcode;
 }
 
-/*	
--   通过 ServerGuard 向有名内存区写入数据
-    [mem_name]     数据区名                 
-    [data]         数据
-    [size]          写入大小
-    [return]		成功(0)或错误代码
-*/
 int API::write_named_mem(const char* mem_name, const void* data, size_t size) {
+    if(size == 0) {
+        throw "Size of named memory blocks must be greater than zero.";
+    }
     int shm_id = time(NULL);
     void* shm_ptr = create_shm(shm_id, size);
     memcpy(shm_ptr, data, size);
@@ -93,7 +74,6 @@ int API::write_named_mem(const char* mem_name, const void* data, size_t size) {
     pack.mem_size = size;
     pack.shm_id = shm_id;
     udp.send(pack);
-
     recv(pack, UDPMsg::RESULTS);
     unmap_shm(shm_ptr);
     del_shm(shm_id);

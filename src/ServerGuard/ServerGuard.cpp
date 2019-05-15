@@ -128,7 +128,6 @@ void stub_transfer_test(){
 	[pack]	type 为 REQUEST_DATA 的 msgpack (payload 中含有共享内存区名信息)
 */
 void handle_request_data(const msgpack& _pack) {
-	printf("task reqeusts data [%s].\n", _pack.mem_name);
 	packet tcp_pack;
 	msgpack pack;
 
@@ -148,28 +147,43 @@ void handle_request_data(const msgpack& _pack) {
 	trans_to_task(data.c_str(), data.size());
 }
 
+/*
+-	处理 Task 创建内存区的请求
+	[pack]	type 为 CREATE_NAMED_MEM 的 msgpack (payload 中含有内存区名和大小信息)
+*/
 void handle_create_named_mem(const msgpack& _pack) {
-	packet tcp_pack;
-	tcp_pack.type = TCPMsg::CREATE_NAMED_MEM;
+	packet tcp_pack(TCPMsg::CREATE_NAMED_MEM);
 	strcpy(tcp_pack.mem_name, _pack.mem_name);
 	tcp_pack.mem_size = _pack.mem_size;
 	tcp.send(tcp_pack);
 	recv(tcp, tcp_pack, TCPMsg::RESULTS);
 
-	msgpack pack;
-	pack.type = UDPMsg::RESULTS;
+	msgpack pack(UDPMsg::RESULTS);
 	pack.errcode = tcp_pack.errcode;
 	udp.send(pack);
 }
 
+/*
+-	处理 Task 写入内存区的请求
+	[pack]	type 为 WRITE_NAMED_MEM 的 msgpack (payload 中含有内存区名,大小,共享内存 ID 信息)
+*/
 void handle_write_named_mem(const msgpack& _pack) {
-	string data = trans_from_task(_pack);
-	packet tcp_pack;
-	tcp_pack.type = TCPMsg::WRITE_NAMED_MEM;
+	packet tcp_pack(TCPMsg::WRITE_NAMED_MEM);
 	strcpy(tcp_pack.mem_name, _pack.mem_name);
 	tcp_pack.size_towrite = _pack.mem_size;
-	tcp.send(tcp_pack);
+	tcp.send(tcp_pack);	// 发送请求尝试写入
+	recv(tcp, tcp_pack, TCPMsg::RESULTS);
 
+	msgpack pack(UDPMsg::RESULTS);
+	if(tcp_pack.errcode) {
+		pack.errcode = tcp_pack.errcode;
+	} else {
+		string data = trans_from_task(_pack);
+		tcp.send_large_data(data);
+		recv(tcp, tcp_pack, TCPMsg::RESULTS);
+		pack.errcode = tcp_pack.errcode;
+	}
+	udp.send(pack);
 }
 
 /*
@@ -191,6 +205,7 @@ bool watch_process(){
 				handle_create_named_mem(pack);
 				break;
 			case UDPMsg::WRITE_NAMED_MEM:
+				handle_write_named_mem(pack);
 				break;
 		}
 	}
@@ -240,7 +255,6 @@ int main(int argc, char** argv){
 		perror("TCP Socket initializing failed");
 		return -1;
 	}
-	// stub_init_process();
-	// watch_process();
 	watch_manager();
+	return 0;
 }

@@ -18,6 +18,12 @@ vector<pair<string, size_t>> ObjectManager::get_mem_keysize() {
     return ret;
 }
 
+size_t ObjectManager::get_mem_size(const char* mem_name) {
+    if(!exist_mem(mem_name))    return 0;
+    lock lk(M);
+    return mem_map[mem_name].size();
+}
+
 bool ObjectManager::exist_mem(const char* mem_name) {
     lock lk(M);
     return mem_map.count(mem_name);
@@ -34,4 +40,13 @@ std::string ObjectManager::get_mem(const char* mem_name) {
     if(!exist_mem(mem_name))    return "";
     lock lk(M);
     return mem_map[mem_name];
+}
+
+bool ObjectManager::write_mem(const char* mem_name, const string& data) {
+    if(!exist_mem(mem_name))    return false;
+    lock lk(M);
+    assert(mem_map[mem_name].size() >= data.size());
+    size_t diff = mem_map[mem_name].size() - data.size();
+    mem_map[mem_name] = data + string(diff, 0);
+    return true;
 }

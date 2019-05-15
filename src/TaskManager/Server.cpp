@@ -38,6 +38,25 @@ void Server::request_data(const packet& pack) {
     }
 }
 
+void Server::write_named_mem(const packet& pack) {
+    packet ret(TCPMsg::RESULTS);
+
+    if(OM::get_mem_size(pack.mem_name) < pack.size_towrite) {
+        ret.errcode = 1;
+        tcp.send(ret, this->fd);
+        return;
+    }
+    ret.errcode = 0;
+    tcp.send(ret, this->fd);
+    string data = tcp.recv_large_data(this->fd);
+    if(data.size() != pack.size_towrite) {
+        ret.errcode = 2;
+    } else {
+        ret.errcode = OM::write_mem(pack.mem_name, data) ? 0 : 3;
+    }
+    tcp.send(ret, this->fd);
+}
+
 /*
     监听 ServerGuard 的请求
 */
@@ -58,7 +77,7 @@ void Server::watch() {
                 this->create_named_mem(pack);
                 break;
             case TCPMsg::WRITE_NAMED_MEM :
-                // this->write_named_mem(pack);
+                this->write_named_mem(pack);
                 break;
         }
     }

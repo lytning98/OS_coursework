@@ -13,10 +13,7 @@
     task_name : 正在执行的 Task
 ### Interfaces:
     bool launch(filepath) :
-        在该服务器上启动任务
-        出错时自动输出错误信息
-        [filepath] : zip 文件路径
-        [return] : 成功(true)与否, 下同
+
 ================================
 */
 #ifndef Server_H_
@@ -48,6 +45,9 @@ public:
         this->thread = std::thread([this]() -> void {this->watch();});
     }
 
+/*  在该服务器上启动任务, 出错时自动输出错误信息
+    [filepath] : zip 文件路径
+    [return] : 成功(true)与否 */
     bool launch(const char* filepath);
 };
 
