@@ -196,6 +196,7 @@ bool watch_process(){
 		switch(pack.type){
 			case UDPMsg::QUIT:
 				tcp.send(packet(TCPMsg::TASK_DONE));
+				system("rm -rf tmp");
 				return true;
 			case UDPMsg::REQUEST_DATA:
 				handle_request_data(pack);
@@ -255,6 +256,7 @@ int main(int argc, char** argv){
 		perror("TCP Socket initializing failed");
 		return -1;
 	}
+	printf("Connection established.\n");
 	watch_manager();
 	return 0;
 }

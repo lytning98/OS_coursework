@@ -50,7 +50,10 @@ void printer() {
             } else {
                 timecount = 0;
                 for(const auto& s: servers) {
-                    printf_msg("#%-2d [%s]  online=%d  busy=%d  task=%-15s", s.id, s.IP.c_str(), s.online, s.busy, s.task_name.c_str());
+                    if(s.online)
+                        printf_msg("#%-2d [%s]  online=%d  busy=%d  task=%-15s", s.id, s.IP.c_str(), s.busy, s.task_name.c_str());
+                    else
+                        printf_msg("#%-2d [%s]  offline", s.id, s.IP.c_str());
                 }
             }
             printf_msg("");

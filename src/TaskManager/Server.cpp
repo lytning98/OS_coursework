@@ -81,6 +81,9 @@ void Server::watch() {
                 break;
         }
     }
+
+    // recv failed : server disconnected
+    this->online = false;
 }
 
 bool Server::launch(const char* filepath) {

@@ -7,13 +7,6 @@
         初始化, 启动监听进程
         [fd] : TCP file descriptor
         [IP] : IP 地址
-### Public members:
-    id : 自动分配的编号
-    IP : IP 地址
-    task_name : 正在执行的 Task
-### Interfaces:
-    bool launch(filepath) :
-
 ================================
 */
 #ifndef Server_H_
@@ -34,9 +27,16 @@ private:
 
 public:
     static int id_top;
+    //  自动分配的编号
     int id;
-    std::string IP, task_name;
-    bool busy = false, online = true;
+    //  IP 地址
+    std::string IP;
+    //  正在运行的 Task 名称
+    std::string task_name;
+    //  Server 是否有正在运行的 Task
+    bool busy = false;
+    //  Server 是否仍在线
+    online = true;
 
     Server() {};
 

@@ -4,6 +4,7 @@
 #ifndef TCPShared_H_
 #define TCPShared_H_
 
+// 描述 ServerGuard 与 TaskManager 之间进行 TCP 通信的数据包类型
 enum class TCPMsg {
 	// ====== sender ServerGuard ======
     REQUEST_DATA,       // payload : mem_name
@@ -15,6 +16,7 @@ enum class TCPMsg {
     RESULTS,            // payload : errcode
 };
 
+// ServerGuard 与 Task 之间进行 TCP 通信的数据包
 struct packet {
     TCPMsg type;
     packet() {}
@@ -33,8 +35,10 @@ struct packet {
     };
 };
 
+// filepacket 的最大 payload 长度
 const int MAX_FILEPACK_LEN = 10240;
 
+// 用于发送文件或较大数据块的数据包结构
 struct filepacket {
     bool finished;
     size_t len;
