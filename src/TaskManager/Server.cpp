@@ -87,8 +87,7 @@ void Server::watch() {
 }
 
 bool Server::launch(const char* filepath) {
-    std::ifstream in(filepath, std::ios::in | std::ios::binary);
-    if(!in.is_open()) {
+    if(access(filepath, 0) < 0) {
         printf_msg("Open file [%s] failed.", filepath);
         return false;
     }
@@ -102,11 +101,10 @@ bool Server::launch(const char* filepath) {
     }
 
     this->task_name = string(filepath);
-
-    filepacket file_pack;
-    while(file_pack.len = in.readsome(file_pack.content, MAX_FILEPACK_LEN)) {
-        file_pack.finished = (in.peek() == EOF);
-        tcp.send(file_pack, this->fd);
+    if(tcp.send_file(filepath, this->fd)) {
+        printf_msg("File transfer via TCP failed.");
+        return false;
+    } else {
+        return true;
     }
-    return true;
 }

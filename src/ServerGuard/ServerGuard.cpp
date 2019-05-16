@@ -31,16 +31,22 @@ bool recv(Socket& socket, Packet& pack, Type type) {
 	return true;
 }
 
-/*
--	编译并执行 Task
-	[makefile_path]	make pipe
-	[exe_path]		待执行路径
-*/
+/*	编译并执行 Task
+	[makefile_path]		make pipe
+	[exe_path]			待执行路径				*/
 void make(const string& makefile_path, const string& exe_path) {
-	string cmd = "make -f " + makefile_path;
-	system(cmd.c_str());
-	cmd = "./" + exe_path + "&";
-	system(cmd.c_str());
+	systemf("make -f %s", makefile_path.c_str());
+	systemf("./%s&", exe_path.c_str());
+}
+
+/*	解压、编译并执行 Task
+	[zip_path]		zip file path				*/
+void unzip_and_make(const string& zip_path) {
+	systemf("unzip %s -d tmp", zip_path.c_str());
+	printf("Package unziped.\n");
+	chdir("tmp");
+	make("makefile", "client_stub");
+	chdir("..");
 }
 
 /*
@@ -50,24 +56,19 @@ bool init_process(const char* filename) {
 	if(access("tmp", 0) < 0) {
 		mkdir("tmp", 0666);
 	}
+
 	string path = string("tmp/") + string(filename);
-	int fd = open(path.c_str(), O_WRONLY | O_CREAT, 0666);
-	if(fd < 0) {
-		printf("Cannot open file [%s].\n", path.c_str());
+	int res = tcp.recv_file(path);
+	if(res != 0) {
+		if(res == 1)
+			printf("Cannot open file [%s].\n", path.c_str());
+		else
+			printf("File transfer via TCP failed.");
 		return false;
 	}
-	filepacket data;
-	do {
-		if(!tcp.recv(data))	return false;
-		write(fd, data.content, data.len);
-	} while(!data.finished);
-	close(fd);
 	printf("Received task file. Saved temporarily as [%s].\n", path.c_str());
-	systemf("unzip %s -d tmp", path.c_str());
-	printf("Package unziped.\n");
-	chdir("tmp");
-	make("makefile", "client_stub");
-	chdir("..");
+
+	unzip_and_make(path);
 	msgpack pack;
 	if(!recv(udp, pack, UDPMsg::HELLO)) {
 		perror("recv hello message failed");
@@ -109,18 +110,6 @@ string trans_from_task(const msgpack& pack) {
 	string data((const char*)shm_ptr, pack.mem_size);
 	unmap_shm(shm_ptr);
 	return data;
-}
-
-/*
--	测试数据传输功能的桩代码
-	**debug**
-*/
-void stub_transfer_test(){
-	int res[4000], cksum = 0;
-	for(int i = 0; i < 4000; i++)	cksum ^= (res[i] = rand());
-	printf("[server]checksum %d\n", cksum);
-	printf("[server]size %ld\n", sizeof(res));
-	trans_to_task(res, sizeof(res));
 }
 
 /*
@@ -186,9 +175,7 @@ void handle_write_named_mem(const msgpack& _pack) {
 	udp.send(pack);
 }
 
-/*
--	监控 Task 进程的主过程, 处理请求
-*/
+// 监控 Task 进程的主过程, 处理请求
 bool watch_process(){
 	msgpack pack;
 
@@ -214,6 +201,7 @@ bool watch_process(){
 	return false;
 }
 
+// 监控 TaskManager 的主过程, 处理请求
 void watch_manager() {
 	packet pack;
 	while(true) {
@@ -221,22 +209,14 @@ void watch_manager() {
 		switch(pack.type) {
 			case TCPMsg::NEW_TASK:
 				printf("Assigned new task : %s\n", pack.filename);
-				init_process(pack.filename);
-				watch_process();
-				printf("Task %s done.\n", pack.filename);
+				if(init_process(pack.filename)) {
+					watch_process();
+					printf("Task %s done.\n", pack.filename);
+				} else {
+					printf("Process initializing failed.\n");
+				}
 				break;
 		}
-	}
-}
-
-bool stub_init_process() {
-	msgpack pack;
-
-	make("makefile", "client_stub");
-	if(!recv(udp, pack, UDPMsg::HELLO)) {
-		return false;
-	} else {
-		return true;
 	}
 }
 

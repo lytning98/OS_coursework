@@ -19,7 +19,11 @@ void listener() {
     }
 }
 
-bool launch_task(const char* filepath) {
+/*  寻找合适的服务器启动 Task
+    [filepath]      zip file path (task package)
+    [silence]       失败时是否输出错误信息
+    [return]        成功(true)或否                              */
+bool launch_task(const char* filepath, bool silence = false) {
     Server* server = nullptr;
     for(auto& s : servers) {
         if(s.online && !s.busy) {
@@ -28,7 +32,7 @@ bool launch_task(const char* filepath) {
         }
     }
     if(!server) {
-        printf_msg("No available server!");
+        if(!silence)    printf_msg("No available server!");
         return false;
     }
     if(!server->launch(filepath)) {
@@ -51,7 +55,7 @@ void printer() {
                 timecount = 0;
                 for(const auto& s: servers) {
                     if(s.online)
-                        printf_msg("#%-2d [%s]  online=%d  busy=%d  task=%-15s", s.id, s.IP.c_str(), s.busy, s.task_name.c_str());
+                        printf_msg("#%-2d [%s]  online  busy=%d  task=%-15s", s.id, s.IP.c_str(), s.busy, s.task_name.c_str());
                     else
                         printf_msg("#%-2d [%s]  offline", s.id, s.IP.c_str());
                 }
@@ -91,11 +95,11 @@ void CUI(int port) {
             printf_msg("");
             move_cursor(1, 0);
             printf("\r");
-            char cmd[100];
+            string cmd;
             show_cursor();
-            scanf("%s", cmd);
+            std::cin>>cmd;
             hide_cursor();
-            if(!launch_task(cmd)) {
+            if(cmd != "q" && !launch_task(cmd.c_str())) {
                 int time = 5;
                 while(time--) {
                     move_cursor(3, 1);

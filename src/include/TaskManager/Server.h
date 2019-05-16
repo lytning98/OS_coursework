@@ -36,7 +36,7 @@ public:
     //  Server 是否有正在运行的 Task
     bool busy = false;
     //  Server 是否仍在线
-    online = true;
+    bool online = true;
 
     Server() {};
 
