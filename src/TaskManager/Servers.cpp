@@ -28,8 +28,12 @@ int launch_task(const char* filepath) {
     int code = 0;
     if(!server || (code = server->launch(filepath)) != 0) {
         lock lk(M);
-        server->busy = false;
-        return code ? code : 1;
+        if(code) {  // launch failed
+            server->busy = false;
+            return code;
+        } else {    // No available server
+            return 1;
+        }
     } else {
         return 0;
     }
