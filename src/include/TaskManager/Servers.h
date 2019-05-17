@@ -29,8 +29,11 @@ namespace Servers {
     int launch_task(const char* filepath);
 
 /*  获取服务器列表信息
-    [return]    vector of struct{id, online, busy, IP, task_name} */
+    [return]    vector of struct{id, online, busy, IP, task_name}                       */
     std::vector<server_info> get_server_list();
+
+/*  断开与所有服务器的连接                                      */
+    void disconnect_all();
 }
 
 #endif

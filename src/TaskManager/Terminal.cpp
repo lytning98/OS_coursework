@@ -12,16 +12,16 @@ using std::string;
 inline int getch(void) {
     struct termios tm, tm_old;
     int fd = 0, ch;
-    if (tcgetattr(fd, &tm) < 0) {//保存现在的终端设置
+    if (tcgetattr(fd, &tm) < 0) {
         return -1;
     }
     tm_old = tm;
-    cfmakeraw(&tm);//更改终端设置为原始模式，该模式下所有的输入数据以字节为单位被处理
-    if (tcsetattr(fd, TCSANOW, &tm) < 0) {//设置上更改之后的设置
+    cfmakeraw(&tm);
+    if (tcsetattr(fd, TCSANOW, &tm) < 0) {
         return -1;
     }
     ch = getchar();
-    if (tcsetattr(fd, TCSANOW, &tm_old) < 0) {//更改设置为最初的样子
+    if (tcsetattr(fd, TCSANOW, &tm_old) < 0) {
         return -1;
     }
     return ch;
@@ -39,11 +39,12 @@ inline int show_cursor() {
     printf("\033[?25h");
 }
 
-
 static bool _run_printing = true;
+static bool _going = true;
+
 void printer() {
     int timecount = 0;
-    while(true) {
+    while(_going) {
         if(_run_printing) {
             move_cursor(5, 0);
             auto list = Servers::get_server_list();
@@ -81,8 +82,10 @@ void launch_CUI(int port) {
     while(true) {
         char ch = getch();
         if(ch == 'q') {
+            _going = false;
+            printer.join();
             system("clear");
-            exit(0);
+            return;
         } else if(ch == 'a') {
             _run_printing = false;
             move_cursor(3, 0);
@@ -120,7 +123,6 @@ void launch_CUI(int port) {
             _run_printing = true;
         }
     }
-    printer.join();
 }
 
 

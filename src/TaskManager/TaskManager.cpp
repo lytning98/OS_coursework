@@ -1,7 +1,6 @@
 #include "headers.h"
 #include "TCPSocket.h"
 #include "TCPShared.h"
-// #include "terminal.h"
 #include "TaskManager/Terminal.h"
 #include "TaskManager/Servers.h"
 
@@ -10,8 +9,8 @@ using std::string;
 TCPSocket tcp;
 
 void listener() {
-    while(true) {
-        int fd = tcp.accept();
+    int fd;
+    while((fd = tcp.accept()) != -1) {
         Servers::add_server(fd, tcp.get_client_IP());
     }
 }
@@ -34,4 +33,8 @@ int main(int argc, char** argv) {
 	}
     std::thread listener(::listener);
     Terminal::launch_CUI(port);
+
+    tcp.close();
+    listener.join();
+    Servers::disconnect_all();
 }

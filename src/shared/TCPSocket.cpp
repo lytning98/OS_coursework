@@ -66,7 +66,7 @@ int TCPSocket::recv_file(const string& path, int conn_fd) {
     bool res = this->continuous_recv(conn_fd, [file_fd](const filepacket& file) {
         write(file_fd, file.content, file.len);
     });
-    close(file_fd);
+    ::close(file_fd);
     return res ? 0 : 2;
 }
 
@@ -102,4 +102,9 @@ int TCPSocket::send_file(const string& path, int fd) {
 
     in.close();
     return 0;
+}
+
+void TCPSocket::close() {
+    shutdown(this->fd, SHUT_RDWR);
+    ::close(this->fd);
 }

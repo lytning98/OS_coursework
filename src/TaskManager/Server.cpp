@@ -104,3 +104,8 @@ int Server::launch(const char* filepath) {
         return 0;
     }
 }
+
+void Server::disconnect() {
+    shutdown(this->fd, SHUT_RDWR);
+    this->thread.join();
+}

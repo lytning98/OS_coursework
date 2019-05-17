@@ -18,7 +18,6 @@
 class Server {
 private:
     int fd;
-    std::thread thread;
 
     void watch();
     void create_named_mem(const packet& pack);
@@ -26,6 +25,7 @@ private:
     void write_named_mem(const packet& pack);
 
 public:
+    std::thread thread;
     static int id_top;
     //  自动分配的编号
     int id;
@@ -50,6 +50,9 @@ public:
     [return] :      成功(0)或errcode(>1)
     [error] :       无法打开文件(2), TCP发送失败(3), zip文件发送失败(4) */
     int launch(const char* filepath);
+
+/*  断开连接                                                          */
+    void disconnect();
 };
 
 #endif

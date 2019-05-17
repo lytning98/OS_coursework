@@ -38,10 +38,17 @@ int launch_task(const char* filepath) {
 vector<server_info> get_server_list() {
     vector<server_info> ret;
     lock lk(M);
-    for(auto& s : servers) {
+    for(const auto& s : servers) {
         ret.emplace_back(s.id, s.online, s.busy, s.IP, s.task_name);
     }
     return ret;
+}
+
+void disconnect_all() {
+    lock lk(M);
+    for(auto& s : servers) {
+        s.disconnect();
+    }
 }
 
 } // end namespace

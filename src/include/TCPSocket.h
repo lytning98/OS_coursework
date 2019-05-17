@@ -94,6 +94,9 @@ public:
     [path]   : 待发送文件路径
     [return] : 成功(0), IO Error(1), TCP Error(2)          */
     int send_file(const std::string& path, int fd = -1);
+
+/*  Close socket file descriptor.                          */
+    void close();
 };
 
 #endif

@@ -204,8 +204,7 @@ bool watch_process(){
 // 监控 TaskManager 的主过程, 处理请求
 void watch_manager() {
 	packet pack;
-	while(true) {
-		tcp.recv(pack);
+	while(tcp.recv(pack)) {
 		switch(pack.type) {
 			case TCPMsg::NEW_TASK:
 				printf("Assigned new task : %s\n", pack.filename);
@@ -218,6 +217,9 @@ void watch_manager() {
 				break;
 		}
 	}
+
+	// tcp recv failed : server shutdown
+	printf("Server has shut down the connection.\n");
 }
 
 int main(int argc, char** argv){
