@@ -46,9 +46,10 @@ public:
     }
 
 /*  在该服务器上启动任务, 出错时自动输出错误信息
-    [filepath] : zip 文件路径
-    [return] : 成功(true)与否 */
-    bool launch(const char* filepath);
+    [filepath] :    zip 文件路径
+    [return] :      成功(0)或errcode(>1)
+    [error] :       无法打开文件(2), TCP发送失败(3), zip文件发送失败(4) */
+    int launch(const char* filepath);
 };
 
 #endif

@@ -4,7 +4,6 @@
 #include "headers.h"
 #include "TCPSocket.h"
 #include "TCPShared.h"
-#include "terminal.h"
 #include "TaskManager/Server.h"
 #include "TaskManager/ObjectManager.h"
 
@@ -86,25 +85,22 @@ void Server::watch() {
     this->online = false;
 }
 
-bool Server::launch(const char* filepath) {
+int Server::launch(const char* filepath) {
     if(access(filepath, 0) < 0) {
-        printf_msg("Open file [%s] failed.", filepath);
-        return false;
+        return 2;
     }
 
     packet pack;
     pack.type = TCPMsg::NEW_TASK;
     strcpy(pack.filename, filepath);
     if(!tcp.send(pack, this->fd)) {
-        perror("TCP send failed.");
-        return false;
+        return 3;
     }
 
     this->task_name = string(filepath);
     if(tcp.send_file(filepath, this->fd)) {
-        printf_msg("File transfer via TCP failed.");
-        return false;
+        return 4;
     } else {
-        return true;
+        return 0;
     }
 }
