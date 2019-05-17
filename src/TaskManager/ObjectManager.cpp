@@ -50,3 +50,12 @@ bool ObjectManager::write_mem(const char* mem_name, const string& data) {
     mem_map[mem_name] = data + string(diff, 0);
     return true;
 }
+
+bool ObjectManager::save_mem_to(const char* mem_name, const char* filepath) {
+    if(!exist_mem(mem_name))    return false;
+    int fd = open(filepath, O_WRONLY | O_CREAT, 0666);
+    if(fd < 0)                  return false;
+    lock lk(M);
+    const string& data = mem_map[mem_name];
+    return write(fd, reinterpret_cast<const void*>(data.c_str()), data.size()) != -1;
+}

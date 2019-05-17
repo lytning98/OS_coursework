@@ -32,7 +32,6 @@ namespace Task {
     [return]		成功(0)或错误代码
 	[errcode]		1: 指定内存区不存在或过小; 2: ServerGuard 封包出错 (size 不一致); 3: TaskManager 写入出错 */
 	int write_named_mem(const char* mem_name, const void* data, size_t size);
-	
 };
 
 #endif

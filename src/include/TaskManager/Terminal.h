@@ -13,12 +13,12 @@ namespace Terminal {
     void printf_msg(const char* format, Args... args) {
         char temp[100];
         sprintf(temp, format, args...);
-        printf("%-50s\n\r", temp);
+        printf("%-90s\n\r", temp);
     }
 
     // 按 TaskManager CUI 的格式输出字符串
     inline void printf_msg(const char* str) {
-        printf("%-50s\n\r", str);
+        printf("%-90s\n\r", str);
     }
 }
 

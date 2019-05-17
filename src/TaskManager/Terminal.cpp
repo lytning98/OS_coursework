@@ -8,6 +8,7 @@ namespace Terminal {
 
 using OM = ObjectManager;
 using std::string;
+using std::cin;
 
 inline int getch(void) {
     struct termios tm, tm_old;
@@ -42,7 +43,7 @@ inline int show_cursor() {
 static bool _run_printing = true;
 static bool _going = true;
 
-void printer() {
+static void printer() {
     int timecount = 0;
     while(_going) {
         if(_run_printing) {
@@ -73,13 +74,28 @@ void printer() {
     }
 }
 
+static void display_msg(const char* msg, int posx, int posy, int time = 5) {
+    while(time--) {
+        move_cursor(posx, posy);
+        printf_msg("%s. Back in %d seconds.", msg, time+1);
+        sleep(1);
+    }
+}
+
 void launch_CUI(int port) {
     hide_cursor();
     putchar('\n');
-    printf_msg("Press [a] to launch task. Press [q] to quit.");
+    printf_msg("Press [a] to launch task. Press [s] to save memory block to file. Press [q] to quit.");
     printf_msg("===================");
     std::thread printer(Terminal::printer);
+
     while(true) {
+        move_cursor(1, 0);
+        printf_msg("Runing on port %d.", port);
+        printf_msg("");
+        printf_msg("Press [a] to launch task. Press [s] to save memory block to file. Press [q] to quit.");
+        _run_printing = true;
+
         char ch = getch();
         if(ch == 'q') {
             _going = false;
@@ -88,18 +104,14 @@ void launch_CUI(int port) {
             return;
         } else if(ch == 'a') {
             _run_printing = false;
-            move_cursor(3, 0);
-            printf_msg("Input task zip file path, or input [q] to cancel.");
-            move_cursor(1, 0);
-            printf_msg("");
-            move_cursor(2, 0);
-            printf_msg("");
-            move_cursor(1, 0);
-            printf("\r");
             string cmd;
-            show_cursor();
-            std::cin>>cmd;
-            hide_cursor();
+            
+            move_cursor(1, 0); printf_msg(""); printf_msg("");
+            printf_msg("Input task zip file path, or input [q] to cancel.");
+            move_cursor(1, 0);  printf("\r");
+            
+            show_cursor();  cin>>cmd;   hide_cursor();
+
             int code = 0;
             if(cmd != "q" && (code = Servers::launch_task(cmd.c_str())) != 0) {
                 switch(code) {
@@ -108,19 +120,37 @@ void launch_CUI(int port) {
                     case 3 : printf_msg("TCP send failed."); break;
                     case 4 : printf_msg("File transfer via TCP failed."); break;
                 }
-
-                int time = 5;
-                while(time--) {
-                    move_cursor(3, 1);
-                    printf_msg("Launching task failed. Back in %d seconds.", time+1);
-                    sleep(1);
-                }
+                display_msg("Launching task failed", 3, 0);
             }
-            move_cursor(1, 0);
-            printf_msg("Runing on port %d.", port);
-            printf_msg("");
-            printf_msg("Press [a] to launch task. Press [q] to quit.");
-            _run_printing = true;
+
+        } else if(ch == 's') {
+            _run_printing = false;
+            string mem_name, file_path;
+
+            move_cursor(1, 0); printf_msg(""); printf_msg("");
+            printf_msg("Input task zip file path, or input [q] to cancel.");
+            move_cursor(1, 0);  printf("\r");
+            
+            show_cursor();  cin>>mem_name;  hide_cursor();
+            if(mem_name == "q")     continue;
+            if(!OM::exist_mem(mem_name.c_str())) {
+                display_msg("ERROR : Memory block doesn't exist", 3, 0);
+                continue;
+            }
+
+            move_cursor(3, 0);
+            printf_msg("Input file path to save [%s]. Or input [q] to cancel.", mem_name.c_str());
+            move_cursor(1, 0);  printf_msg("");
+            move_cursor(1, 0);  printf("\r");
+            show_cursor();  cin>>file_path;  hide_cursor();
+            if(file_path == "q")    continue;
+            if(!OM::save_mem_to(mem_name.c_str(), file_path.c_str())) {
+                display_msg("ERROR : IO failed", 3, 0);
+            } else {
+                move_cursor(1, 0);
+                printf_msg("Saved memory block [%s] to [%s].", mem_name.c_str(), file_path.c_str());
+                display_msg("Memory block is saved successfully", 3, 0);
+            }
         }
     }
 }

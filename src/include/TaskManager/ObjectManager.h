@@ -46,6 +46,13 @@ public:
         [mem_name, data]    内存区名和待写入数据
         [return]    成功(true)或否(false)                   */
     static bool write_mem(const char* mem_name, const std::string& data);
+
+    /*  保存内存区内数据至本地
+        [mem_name]  内存区名
+        [filepath]  保存路径
+        [return]    成功(true)或否(false)                   */
+    static bool save_mem_to(const char* mem_name, const char* filepath);
+    
 };
 
 #endif
