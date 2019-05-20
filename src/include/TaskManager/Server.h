@@ -23,7 +23,7 @@ private:
     void create_named_mem(const packet& pack);
     void request_data(const packet& pack);
     void write_named_mem(const packet& pack);
-    void send_results(std::function<int(void)>fetch_errcode);
+    void send_results(int errcode);
     void del_named_mem(const packet& pack);
     void create_mutex(const packet& pack);
 

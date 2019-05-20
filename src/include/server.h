@@ -16,6 +16,7 @@ enum class UDPMsg {
 	TRANS_DONE,			// payload : none							共享内存区中的数据已读取完毕
 	CREATE_MUTEX,		// payload : mut_name						请求创建互斥锁
 	LOCK_MUTEX,			// payload : mut_name						请求获取互斥锁
+	UNLOCK_MUTEX,		// payload : mut_name						请求解锁互斥锁
 	// ====== sender ServerGuard ======
 	REQUEST_DONE,		// payload : shm_id + shm_size		请求数据已写入共享内存
 	RESULTS,			// payload : errcode				操作完成返回结果

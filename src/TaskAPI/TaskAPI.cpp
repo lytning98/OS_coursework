@@ -113,4 +113,11 @@ int lock_mutex(const char* mut_name) {
     recv_ret_results();
 }
 
+int unlock_mutex(const char* mut_name) {
+    msgpack pack(UDPMsg::UNLOCK_MUTEX);
+    strcpy(pack.mut_name, mut_name);
+    udp.send(pack);
+    recv_ret_results();
+}
+
 } //end namespace

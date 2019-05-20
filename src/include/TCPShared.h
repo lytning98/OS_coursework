@@ -13,6 +13,8 @@ enum class TCPMsg {
     WRITE_NAMED_MEM,    // payload : mem_name + size_towirte
     DEL_NAMED_MEM,      // payload : mem_name
     CREATE_MUTEX,       // payload : mut_name
+    LOCK_MUTEX,         // payload : mut_name
+    UNLOCK_MUTEX,       // payload : mut_name
     // ====== sender TaskManager ======
     NEW_TASK,           // payload : none;
     RESULTS,            // payload : errcode

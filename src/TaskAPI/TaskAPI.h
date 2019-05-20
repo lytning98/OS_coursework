@@ -51,6 +51,12 @@ namespace Task {
 		[return]		成功(0)或错误代码
 		[errcode]		1: 指定互斥锁不存在		*/   
 	int lock_mutex(const char* mut_name);
+
+	/*	通过 ServerGuard UNLOCK 互斥锁
+		[mut_name]     	互斥锁名
+		[return]		成功(0)或错误代码
+		[errcode]		1: 指定互斥锁不存在		*/   
+	int unlock_mutex(const char* mut_name);
 };
 
 #endif

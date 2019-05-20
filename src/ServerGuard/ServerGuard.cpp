@@ -202,6 +202,28 @@ void handle_create_mutex(const msgpack& _pack) {
 	forward_results();
 }
 
+/*
+-	处理 Task 获取互斥锁的请求
+	[pack]	type 为 LOCK_MUTEX 的 msgpack (payload 中含有互斥锁名信息)
+*/
+void handle_lock_mutex(const msgpack& _pack) {
+	packet tcp_pack(TCPMsg::LOCK_MUTEX);
+	strcpy(tcp_pack.mut_name, _pack.mut_name);
+	tcp.send(tcp_pack);
+	forward_results();
+}
+
+/*
+-	处理 Task 解锁互斥锁的请求
+	[pack]	type 为 UNLOCK_MUTEX 的 msgpack (payload 中含有互斥锁名信息)
+*/
+void handle_unlock_mutex(const msgpack& _pack) {
+	packet tcp_pack(TCPMsg::UNLOCK_MUTEX);
+	strcpy(tcp_pack.mut_name, _pack.mut_name);
+	tcp.send(tcp_pack);
+	forward_results();
+}
+
 // 监控 Task 进程的主过程, 处理请求
 bool watch_process(){
 	msgpack pack;
@@ -226,6 +248,12 @@ bool watch_process(){
 				break;
 			case UDPMsg::CREATE_MUTEX:
 				handle_create_mutex(pack);
+				break;
+			case UDPMsg::LOCK_MUTEX:
+				handle_lock_mutex(pack);
+				break;
+			case UDPMsg::UNLOCK_MUTEX:
+				handle_unlock_mutex(pack);
 				break;
 		}
 	}
