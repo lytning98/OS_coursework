@@ -40,6 +40,17 @@ namespace Task {
 		[errcode]		1: 指定内存区不存在		*/      
 	int del_named_mem(const char* mem_name);
 
+	/*	通过 ServerGuard 创建互斥锁
+		[mut_name]     	互斥锁名
+		[return]		成功(0)或错误代码
+		[errcode]		1: 指定互斥锁已存在		*/   
+	int create_mutex(const char* mut_name);
+
+	/*	通过 ServerGuard LOCK 互斥锁
+		[mut_name]     	互斥锁名
+		[return]		成功(0)或错误代码
+		[errcode]		1: 指定互斥锁不存在		*/   
+	int lock_mutex(const char* mut_name);
 };
 
 #endif

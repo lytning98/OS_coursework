@@ -12,6 +12,7 @@ enum class TCPMsg {
     CREATE_NAMED_MEM,   // payload : mem_name + mem_size
     WRITE_NAMED_MEM,    // payload : mem_name + size_towirte
     DEL_NAMED_MEM,      // payload : mem_name
+    CREATE_MUTEX,       // payload : mut_name
     // ====== sender TaskManager ======
     NEW_TASK,           // payload : none;
     RESULTS,            // payload : errcode
@@ -26,7 +27,11 @@ struct packet {
     union {
         char filename[128];
         struct {
-            char mem_name[64];
+            // union 用于为成员变量设置别名
+            union {
+                char mem_name[64];
+                char mut_name[64];
+            };
             union {
                 size_t mem_size;
                 size_t size_towrite;

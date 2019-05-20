@@ -64,10 +64,16 @@ static void printer() {
             auto res = OM::get_mem_keysize();
             size_t tot_size = 0;
             for(const auto& kv: res) {
-                printf_msg("creator: #%-2d, size: %8luB, name: %s", 0, kv.second, kv.first.c_str());
+                printf_msg("name: %s, size: %8luB", kv.first.c_str(), kv.second);
                 tot_size += kv.second;
             }
             printf_msg("total memory blocks: %d, total size %luB", res.size(), tot_size);
+            printf_msg("");
+            auto mut_res = OM::get_mutex_keystate();
+            for(const auto& kv: mut_res) {
+                printf_msg("name: %s, state: %s", kv.first.c_str(), kv.second?"unlock":"locked");
+            }
+            printf_msg("total mutexes : %d", mut_res.size());
             fflush(stdout);
         }
         sleep(1);

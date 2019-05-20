@@ -137,22 +137,6 @@ void handle_request_data(const msgpack& _pack) {
 }
 
 /*
--	处理 Task 创建内存区的请求
-	[pack]	type 为 CREATE_NAMED_MEM 的 msgpack (payload 中含有内存区名和大小信息)
-*/
-void handle_create_named_mem(const msgpack& _pack) {
-	packet tcp_pack(TCPMsg::CREATE_NAMED_MEM);
-	strcpy(tcp_pack.mem_name, _pack.mem_name);
-	tcp_pack.mem_size = _pack.mem_size;
-	tcp.send(tcp_pack);
-	recv(tcp, tcp_pack, TCPMsg::RESULTS);
-
-	msgpack pack(UDPMsg::RESULTS);
-	pack.errcode = tcp_pack.errcode;
-	udp.send(pack);
-}
-
-/*
 -	处理 Task 写入内存区的请求
 	[pack]	type 为 WRITE_NAMED_MEM 的 msgpack (payload 中含有内存区名,大小,共享内存 ID 信息)
 */
@@ -175,6 +159,27 @@ void handle_write_named_mem(const msgpack& _pack) {
 	udp.send(pack);
 }
 
+// 接受 TaskManager 返回的操作结果并转发给 Task
+void forward_results() {
+	packet tcp_pack;
+	recv(tcp, tcp_pack, TCPMsg::RESULTS);
+	msgpack pack(UDPMsg::RESULTS);
+	pack.errcode = tcp_pack.errcode;
+	udp.send(pack);
+}
+
+/*
+-	处理 Task 创建内存区的请求
+	[pack]	type 为 CREATE_NAMED_MEM 的 msgpack (payload 中含有内存区名和大小信息)
+*/
+void handle_create_named_mem(const msgpack& _pack) {
+	packet tcp_pack(TCPMsg::CREATE_NAMED_MEM);
+	strcpy(tcp_pack.mem_name, _pack.mem_name);
+	tcp_pack.mem_size = _pack.mem_size;
+	tcp.send(tcp_pack);
+	forward_results();
+}
+
 /*
 -	处理 Task 删除内存区的请求
 	[pack]	type 为 DEL_NAMED_MEM 的 msgpack (payload 中含有内存区名信息)
@@ -183,11 +188,18 @@ void handle_del_named_mem(const msgpack& _pack) {
 	packet tcp_pack(TCPMsg::DEL_NAMED_MEM);
 	strcpy(tcp_pack.mem_name, _pack.mem_name);
 	tcp.send(tcp_pack);
-	recv(tcp, tcp_pack, TCPMsg::RESULTS);
+	forward_results();
+}
 
-	msgpack pack(UDPMsg::RESULTS);
-	pack.errcode = tcp_pack.errcode;
-	udp.send(pack);
+/*
+-	处理 Task 创建互斥锁的请求
+	[pack]	type 为 CREATE_MUTEX 的 msgpack (payload 中含有互斥锁名信息)
+*/
+void handle_create_mutex(const msgpack& _pack) {
+	packet tcp_pack(TCPMsg::CREATE_MUTEX);
+	strcpy(tcp_pack.mut_name, _pack.mut_name);
+	tcp.send(tcp_pack);
+	forward_results();
 }
 
 // 监控 Task 进程的主过程, 处理请求
@@ -202,7 +214,6 @@ bool watch_process(){
 				return true;
 			case UDPMsg::REQUEST_DATA:
 				handle_request_data(pack);
-				// stub_transfer_test();
 				break;
 			case UDPMsg::CREATE_NAMED_MEM:
 				handle_create_named_mem(pack);
@@ -212,6 +223,9 @@ bool watch_process(){
 				break;
 			case UDPMsg::DEL_NAMED_MEM:
 				handle_del_named_mem(pack);
+				break;
+			case UDPMsg::CREATE_MUTEX:
+				handle_create_mutex(pack);
 				break;
 		}
 	}

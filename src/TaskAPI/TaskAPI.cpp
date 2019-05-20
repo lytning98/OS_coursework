@@ -85,12 +85,32 @@ int write_named_mem(const char* mem_name, const void* data, size_t size) {
     return pack.errcode;
 }
 
+// 接受并返回 RESULTS 数据包的 errcode
+static int recv_ret_results() {
+    static msgpack pack;
+    recv(pack, UDPMsg::RESULTS);
+    return pack.errcode;
+}
+
 int del_named_mem(const char* mem_name) {
     msgpack pack(UDPMsg::DEL_NAMED_MEM);
     strcpy(pack.mem_name, mem_name);
     udp.send(pack);
-    recv(pack, UDPMsg::RESULTS);
-    return pack.errcode;
+    recv_ret_results();
+}
+
+int create_mutex(const char* mut_name) {
+    msgpack pack(UDPMsg::CREATE_MUTEX);
+    strcpy(pack.mut_name, mut_name);
+    udp.send(pack);
+    recv_ret_results();
+}
+
+int lock_mutex(const char* mut_name) {
+    msgpack pack(UDPMsg::LOCK_MUTEX);
+    strcpy(pack.mut_name, mut_name);
+    udp.send(pack);
+    recv_ret_results();
 }
 
 } //end namespace

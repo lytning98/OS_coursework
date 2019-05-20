@@ -56,11 +56,24 @@ void Server::write_named_mem(const packet& pack) {
     tcp.send(ret, this->fd);
 }
 
-void Server::del_named_mem(const packet& pack) {
+// 快速返回结果, 用于操作较少的 API
+void Server::send_results(std::function<int(void)>fetch_errcode) {
     packet ret(TCPMsg::RESULTS);
-    ret.errcode = !OM::del_mem(pack.mem_name);
+    ret.errcode = fetch_errcode();
     tcp.send(ret, this->fd);
 }
+
+// void Server::del_named_mem(const packet& pack) {
+//     packet ret(TCPMsg::RESULTS);
+//     ret.errcode = !OM::del_mem(pack.mem_name);
+//     tcp.send(ret, this->fd);
+// }
+
+// void Server::create_mutex(const packet& pack) {
+//     packet ret(TCPMsg::CREATE_MUTEX);
+//     ret.errcode = !OM::create_mutex(pack.mut_name);
+//     tcp.send(ret, this->fd);
+// }
 
 /*
     监听 ServerGuard 的请求
@@ -85,7 +98,14 @@ void Server::watch() {
                 this->write_named_mem(pack);
                 break;
             case TCPMsg::DEL_NAMED_MEM :
-                this->del_named_mem(pack);
+                this->send_results([&pack](){
+                    return !OM::del_mem(pack.mem_name);
+                });
+                break;
+            case TCPMsg::CREATE_MUTEX :
+                this->send_results([&pack](){
+                    return !OM::create_mutex(pack.mut_name);
+                });
                 break;
         }
     }
@@ -94,6 +114,9 @@ void Server::watch() {
     this->online = false;
 }
 
+/*
+    启动新 Task
+*/
 int Server::launch(const char* filepath) {
     if(access(filepath, 0) < 0) {
         return 2;

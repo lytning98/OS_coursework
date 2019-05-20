@@ -14,6 +14,8 @@ enum class UDPMsg {
 	WRITE_NAMED_MEM,	// payload : mem_name + shm_id + shm_size	请求写入有名内存区		
 	DEL_NAMED_MEM,		// payload : mem_name						请求删除有名内存区
 	TRANS_DONE,			// payload : none							共享内存区中的数据已读取完毕
+	CREATE_MUTEX,		// payload : mut_name						请求创建互斥锁
+	LOCK_MUTEX,			// payload : mut_name						请求获取互斥锁
 	// ====== sender ServerGuard ======
 	REQUEST_DONE,		// payload : shm_id + shm_size		请求数据已写入共享内存
 	RESULTS,			// payload : errcode				操作完成返回结果
@@ -27,7 +29,10 @@ struct msgpack{
 	msgpack(UDPMsg type = UDPMsg::QUIT) : type(type) {}
 	// payload
 	int shm_id;
-	char mem_name[64];
+	union {
+		char mem_name[64];
+		char mut_name[64];
+	};
 	int errcode;
 	union {
 		size_t mem_size;
