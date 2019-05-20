@@ -56,6 +56,12 @@ void Server::write_named_mem(const packet& pack) {
     tcp.send(ret, this->fd);
 }
 
+void Server::del_named_mem(const packet& pack) {
+    packet ret(TCPMsg::RESULTS);
+    ret.errcode = !OM::del_mem(pack.mem_name);
+    tcp.send(ret, this->fd);
+}
+
 /*
     监听 ServerGuard 的请求
 */
@@ -77,6 +83,9 @@ void Server::watch() {
                 break;
             case TCPMsg::WRITE_NAMED_MEM :
                 this->write_named_mem(pack);
+                break;
+            case TCPMsg::DEL_NAMED_MEM :
+                this->del_named_mem(pack);
                 break;
         }
     }

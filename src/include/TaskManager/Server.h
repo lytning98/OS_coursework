@@ -23,6 +23,7 @@ private:
     void create_named_mem(const packet& pack);
     void request_data(const packet& pack);
     void write_named_mem(const packet& pack);
+    void del_named_mem(const packet& pack);
 
 public:
     std::thread thread;

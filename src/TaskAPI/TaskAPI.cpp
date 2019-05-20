@@ -85,4 +85,12 @@ int write_named_mem(const char* mem_name, const void* data, size_t size) {
     return pack.errcode;
 }
 
+int del_named_mem(const char* mem_name) {
+    msgpack pack(UDPMsg::DEL_NAMED_MEM);
+    strcpy(pack.mem_name, mem_name);
+    udp.send(pack);
+    recv(pack, UDPMsg::RESULTS);
+    return pack.errcode;
+}
+
 } //end namespace

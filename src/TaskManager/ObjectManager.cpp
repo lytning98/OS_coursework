@@ -4,10 +4,11 @@
 using std::vector;
 using std::pair;
 using std::string;
+using std::mutex;
 typedef std::lock_guard<std::mutex> lock;
 
 std::unordered_map<string, string> ObjectManager::mem_map;
-std::mutex ObjectManager::M;
+mutex ObjectManager::M;
 
 vector<pair<string, size_t>> ObjectManager::get_mem_keysize() {
     vector<pair<string, size_t>> ret;
@@ -58,4 +59,53 @@ bool ObjectManager::save_mem_to(const char* mem_name, const char* filepath) {
     lock lk(M);
     const string& data = mem_map[mem_name];
     return write(fd, reinterpret_cast<const void*>(data.c_str()), data.size()) != -1;
+}
+
+bool ObjectManager::del_mem(const char* mem_name) {
+    if(!exist_mem(mem_name))    return false;
+    lock lk(M);
+    mem_map.erase(mem_name);
+    return true;
+}
+
+std::unordered_map<string, mutex>  ObjectManager::mutex_map;
+mutex   ObjectManager::M_mutex;
+
+vector<pair<string, bool>> ObjectManager::get_mutex_keystate() {
+    vector<pair<string, bool>>  ret;
+    lock lk(M_mutex);
+    for(auto& kv : mutex_map) {
+        if(kv.second.try_lock()) {
+            ret.emplace_back(kv.first, true);
+            kv.second.unlock();
+        } else {
+            ret.emplace_back(kv.first, false);
+        }
+    }
+    return ret;
+}
+
+bool ObjectManager::exist_mutex(const char* mut_name) {
+    lock lk(M_mutex);
+    return mutex_map.count(mut_name);
+}
+
+bool ObjectManager::create_mutex(const char* mut_name) {
+    if(exist_mutex(mut_name))   return false;
+    lock lk(M_mutex);
+    //  引用 map 内元素时自动构造新实例
+    const auto& ignored = mutex_map[mut_name];
+    return true;
+}
+
+bool ObjectManager::lock_mutex(const char* mut_name) {
+    if(!exist_mutex(mut_name))  return false;
+    mutex_map[mut_name].lock();
+    return true;
+}
+
+bool ObjectManager::unlock_mutex(const char* mut_name) {
+    if(!exist_mutex(mut_name))  return false;
+    mutex_map[mut_name].unlock();
+    return true;
 }

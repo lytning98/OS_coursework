@@ -11,6 +11,7 @@ enum class TCPMsg {
     TASK_DONE,          // payload : none
     CREATE_NAMED_MEM,   // payload : mem_name + mem_size
     WRITE_NAMED_MEM,    // payload : mem_name + size_towirte
+    DEL_NAMED_MEM,      // payload : mem_name
     // ====== sender TaskManager ======
     NEW_TASK,           // payload : none;
     RESULTS,            // payload : errcode

@@ -175,6 +175,21 @@ void handle_write_named_mem(const msgpack& _pack) {
 	udp.send(pack);
 }
 
+/*
+-	处理 Task 删除内存区的请求
+	[pack]	type 为 DEL_NAMED_MEM 的 msgpack (payload 中含有内存区名信息)
+*/
+void handle_del_named_mem(const msgpack& _pack) {
+	packet tcp_pack(TCPMsg::DEL_NAMED_MEM);
+	strcpy(tcp_pack.mem_name, _pack.mem_name);
+	tcp.send(tcp_pack);
+	recv(tcp, tcp_pack, TCPMsg::RESULTS);
+
+	msgpack pack(UDPMsg::RESULTS);
+	pack.errcode = tcp_pack.errcode;
+	udp.send(pack);
+}
+
 // 监控 Task 进程的主过程, 处理请求
 bool watch_process(){
 	msgpack pack;
@@ -194,6 +209,9 @@ bool watch_process(){
 				break;
 			case UDPMsg::WRITE_NAMED_MEM:
 				handle_write_named_mem(pack);
+				break;
+			case UDPMsg::DEL_NAMED_MEM:
+				handle_del_named_mem(pack);
 				break;
 		}
 	}

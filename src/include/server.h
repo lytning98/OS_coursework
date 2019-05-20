@@ -12,6 +12,7 @@ enum class UDPMsg {
 	QUIT,               // payload : none							执行结束
 	CREATE_NAMED_MEM,	// payload : mem_name + mem_size			请求创建有名内存区
 	WRITE_NAMED_MEM,	// payload : mem_name + shm_id + shm_size	请求写入有名内存区		
+	DEL_NAMED_MEM,		// payload : mem_name						请求删除有名内存区
 	TRANS_DONE,			// payload : none							共享内存区中的数据已读取完毕
 	// ====== sender ServerGuard ======
 	REQUEST_DONE,		// payload : shm_id + shm_size		请求数据已写入共享内存
