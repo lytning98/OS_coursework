@@ -22,6 +22,7 @@ int launch_task(const char* filepath) {
         if(s.online && !s.busy) {
             s.busy = true;
             server = &s;
+            break;
         }
     }
     M.unlock();

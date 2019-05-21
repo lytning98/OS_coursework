@@ -12,7 +12,7 @@
 using std::string;
 using std::min;
 
-UDPSocket udp(SOCKET_FILE);
+UDPSocket udp;
 TCPSocket tcp;
 
 template <typename... Args>
@@ -162,6 +162,8 @@ void handle_write_named_mem(const msgpack& _pack) {
 // 接受 TaskManager 返回的操作结果并转发给 Task
 void forward_results() {
 	packet tcp_pack;
+	printf("recving @ line165\n");
+	fflush(stdout);
 	recv(tcp, tcp_pack, TCPMsg::RESULTS);
 	msgpack pack(UDPMsg::RESULTS);
 	pack.errcode = tcp_pack.errcode;
@@ -282,6 +284,16 @@ void watch_manager() {
 	printf("Server has shut down the connection.\n");
 }
 
+string get_signature() {
+    char buffer[1024] = {0};
+    if(!getcwd(buffer, 1024))   return "";
+    if(strlen(buffer) > 90) {
+        printf("Warning : current working directory path is too long!");
+    }
+    string ret(buffer);
+    return  ret.substr(0, 90);
+}
+
 int main(int argc, char** argv){
 	if(argc == 3) {
 		tcp = TCPSocket(argv[1], atoi(argv[2]));
@@ -289,6 +301,9 @@ int main(int argc, char** argv){
 		printf("TaskManager address is not specified. Running in local mode (127.0.0.1:9412).\n");
 		tcp = TCPSocket("127.0.0.1", 9412);
 	}
+
+	string socket_file = string(SOCKET_FILE) + get_signature();
+	udp = UDPSocket(socket_file.c_str());
 
 	if(!udp.initialize()) {
 		perror("UDP Socket initializing failed");

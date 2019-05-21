@@ -11,6 +11,7 @@ inline void set_sun_path(char* sun_path, const char* path) {
 
 bool UDPSocket::init() {
     this->server_addr.sun_family = AF_UNIX;
+    memset(this->server_addr.sun_path, 0, sizeof(this->server_addr.sun_path));
     set_sun_path(this->server_addr.sun_path, this->server_file);
     return (this->fd = socket(AF_UNIX, SOCK_DGRAM, 0)) != -1;
 }
@@ -22,6 +23,7 @@ bool UDPSocket::init_server() {
 
 bool UDPSocket::init_client() {
     this->client_addr.sun_family = AF_UNIX;
+    memset(this->client_addr.sun_path, 0, sizeof(this->client_addr.sun_path));
     set_sun_path(this->client_addr.sun_path, this->client_file);
     if(!this->init()) {
         printf("Init server socket file failed.\n");

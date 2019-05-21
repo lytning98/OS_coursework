@@ -8,6 +8,8 @@
 #include "UDPSocket.h"
 #include "TaskAPI.h"
 
+using std::string;
+
 namespace Task {
 
 UDPSocket udp;
@@ -21,8 +23,23 @@ static bool recv(msgpack& pack, UDPMsg type) {
     return true;
 }
 
+static string get_signature() {
+    char buffer[1024] = {0};
+    if(!getcwd(buffer, 1024))   return "";
+    if(strlen(buffer) > 90) {
+        printf("Warning : current working directory path is too long!");
+    }
+    string ret(buffer);
+    ret = ret.substr(0, ret.length()-4);
+    return  ret.substr(0, 90);
+}
+
 bool initialize() {
-    udp = UDPSocket(SOCKET_FILE, SOCKET_CLIENT_FILE);
+    string sign = get_signature();
+    string socket_file = string(SOCKET_FILE) + sign;
+    string socket_client_file = string(SOCKET_CLIENT_FILE) + sign;
+    udp = UDPSocket(socket_file.c_str(), socket_client_file.c_str());
+    
     if(!udp.initialize()) {
         printf("Initializing failed.\n");
         return false;

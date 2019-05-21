@@ -17,7 +17,6 @@
 
 class Server {
 private:
-    int fd;
 
     void watch();
     void create_named_mem(const packet& pack);
@@ -32,6 +31,7 @@ public:
     static int id_top;
     //  自动分配的编号
     int id;
+    int fd;
     //  IP 地址
     std::string IP;
     //  正在运行的 Task 名称
