@@ -1,10 +1,12 @@
 #include "headers.h"
+#include "log.h"
 #include "TaskManager/ObjectManager.h"
 
 using std::vector;
 using std::pair;
 using std::string;
 using std::mutex;
+using Log::log;
 typedef std::lock_guard<std::mutex> lock;
 
 std::unordered_map<string, string> ObjectManager::mem_map;

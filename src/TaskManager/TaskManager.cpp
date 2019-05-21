@@ -1,6 +1,7 @@
 #include "headers.h"
 #include "TCPSocket.h"
 #include "TCPShared.h"
+#include "log.h"
 #include "TaskManager/Terminal.h"
 #include "TaskManager/Servers.h"
 
@@ -16,6 +17,7 @@ void listener() {
 }
 
 int main(int argc, char** argv) {
+    Log::set_logfile("log_TaskManager.log");
     system("clear");
     int port;
     if(argc != 2) {

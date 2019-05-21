@@ -4,10 +4,13 @@
 #include "headers.h"
 #include "TCPSocket.h"
 #include "TCPShared.h"
+#include "log.h"
 #include "TaskManager/Server.h"
+#include "TaskManager/Servers.h"
 #include "TaskManager/ObjectManager.h"
 
 using std::string;
+using Log::log;
 using OM = ObjectManager;
 
 extern TCPSocket tcp;
@@ -73,8 +76,11 @@ void Server::watch() {
     while(tcp.recv(pack, this->fd)) {
         switch(pack.type) {
             case TCPMsg::TASK_DONE :
-                this->busy = false;
-                this->task_name = "";
+                {   // make a scope for unique_lock
+                    auto lock = Servers::get_lock();
+                    this->busy = false;
+                    this->task_name = "";
+                }
                 break;
             case TCPMsg::REQUEST_DATA :
                 this->request_data(pack);

@@ -55,7 +55,7 @@ static void printer() {
                 timecount = 0;
                 for(const auto& s: list) {
                     if(s.online)
-                        printf_msg("#%-2d [%s]  online  fd=%d  busy=%d  task=%-15s", s.id, s.IP.c_str(), s.fd, s.busy, s.task_name.c_str());
+                        printf_msg("#%-2d [%s]  online  fd=%d busy=%d  task=%-15s", s.id, s.IP.c_str(), s.fd, s.busy, s.task_name.c_str());
                     else
                         printf_msg("#%-2d [%s]  offline", s.id, s.IP.c_str());
                 }

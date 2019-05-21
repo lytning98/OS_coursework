@@ -7,14 +7,18 @@
 namespace Servers {
     // 用于提供服务器列表信息的结构体
     struct server_info {
-        int id;
+        int id, fd;
         bool online;
         bool busy;
         const std::string& IP;
         const std::string& task_name;
-        server_info (int id, bool online, bool busy, const std::string& IP, const std::string& task_name)
-            : id(id), online(online), busy(busy), IP(IP), task_name(task_name) {}
+        server_info (int id, int fd, bool online, bool busy, const std::string& IP, const std::string& task_name)
+            : id(id), fd(fd), online(online), busy(busy), IP(IP), task_name(task_name) {}
     };
+
+/*  获取互斥锁, 用于在模块外对服务器信息进行互斥操作
+    [return]      std::unique_lock<mutex> 的右值引用            */
+    std::unique_lock<std::mutex> && get_lock();
 
 /*  添加服务器
     [fd]        file descriptor
