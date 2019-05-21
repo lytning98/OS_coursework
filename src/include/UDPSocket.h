@@ -35,10 +35,6 @@ public:
     UDPSocket(const char* server_filepath, const char* client_filepath)
         : is_server(false), server_file(server_filepath), client_file(client_filepath) {}
 
-    ~UDPSocket() {
-        this->is_server ? unlink(server_file) : unlink(client_file);
-    }
-
 /*  发送数据
     [data] : 待发送 T 实例
     [return] : 成功(true)或否, 出错时设置 errno             */

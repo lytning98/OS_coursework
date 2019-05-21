@@ -42,9 +42,9 @@ struct msgpack{
 };
 
 // 用于 UNIX 域 UDP 通信的 server domain file 路径
-const char* SOCKET_FILE = "/task.socket";
+const char* SOCKET_FILE = "task.socket";
 // 用于 UNIX 域 UDP 通信的 client domain file 路径
-const char* SOCKET_CLIENT_FILE = "/taskc.socket";
+const char* SOCKET_CLIENT_FILE = "taskc.socket";
 
 // 用于在 ServerGuard 和 Task 之间交换数据的共享内存大小
 const int SHM_BUF_SIZE = 10240;

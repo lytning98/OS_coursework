@@ -3,9 +3,15 @@
 */
 #include "UDPSocket.h"
 
+// 使用 UNIX domain socket 抽象路径名设置 sun_path
+inline void set_sun_path(char* sun_path, const char* path) {
+    *sun_path = '\0';
+    strcpy(sun_path+1, path);
+}
+
 bool UDPSocket::init() {
     this->server_addr.sun_family = AF_UNIX;
-    strcpy(this->server_addr.sun_path, this->server_file);
+    set_sun_path(this->server_addr.sun_path, this->server_file);
     return (this->fd = socket(AF_UNIX, SOCK_DGRAM, 0)) != -1;
 }
 
@@ -16,7 +22,7 @@ bool UDPSocket::init_server() {
 
 bool UDPSocket::init_client() {
     this->client_addr.sun_family = AF_UNIX;
-    strcpy(this->client_addr.sun_path, this->client_file);
+    set_sun_path(this->client_addr.sun_path, this->client_file);
     if(!this->init()) {
         printf("Init server socket file failed.\n");
         return false;
@@ -32,9 +38,8 @@ bool UDPSocket::initialize() {
 }
 
 bool UDPSocket::send(void* buf, size_t len) {
-    auto dest = this->is_server ? 
-        (struct sockaddr*)&this->client_addr : (struct sockaddr*)&this->server_addr;
-    return sendto(this->fd, buf, len, 0, dest, sizeof(*dest)) != -1;
+    auto* dest = this->is_server ? &this->client_addr : &this->server_addr;
+    return sendto(this->fd, buf, len, 0, (struct sockaddr*)dest, sizeof(*dest)) != -1;
 }
 
 bool UDPSocket::recv(void* buf, size_t len) {
