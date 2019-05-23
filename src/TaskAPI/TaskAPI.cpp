@@ -23,6 +23,8 @@ static bool recv(msgpack& pack, UDPMsg type) {
     return true;
 }
 
+/* 获取当前工作路径 用于设置 Socket 服务器地址
+   ServerGuard 创建的 Socket 地址为当前工作路径 */
 static string get_signature() {
     char buffer[1024] = {0};
     if(!getcwd(buffer, 1024))   return "";
@@ -30,7 +32,7 @@ static string get_signature() {
         printf("Warning : current working directory path is too long!");
     }
     string ret(buffer);
-    ret = ret.substr(0, ret.length()-4);
+    ret = ret.substr(0, ret.length()-4); // Task 进程运行于 S.G. 同目录下的 tmp/ 目录下, 因此去掉最后四个字符
     return  ret.substr(0, 90);
 }
 
