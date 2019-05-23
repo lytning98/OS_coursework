@@ -162,8 +162,6 @@ void handle_write_named_mem(const msgpack& _pack) {
 // 接受 TaskManager 返回的操作结果并转发给 Task
 void forward_results() {
 	packet tcp_pack;
-	printf("recving @ line165\n");
-	fflush(stdout);
 	recv(tcp, tcp_pack, TCPMsg::RESULTS);
 	msgpack pack(UDPMsg::RESULTS);
 	pack.errcode = tcp_pack.errcode;

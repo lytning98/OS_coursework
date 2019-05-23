@@ -10,6 +10,7 @@ using OM = ObjectManager;
 using std::string;
 using std::cin;
 
+// 异步获取输入字符
 inline int getch(void) {
     struct termios tm, tm_old;
     int fd = 0, ch;
