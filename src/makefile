@@ -14,14 +14,24 @@ dependencies = $(sources:.cpp=.d)
 objects = $(sources:.cpp=.o)
 
 $(dependencies) : %.d : %.cpp
-	@set -e; rm -f $@; \
-	g++ -MM $(flags) $< >> $@; \
-	sed 's,\($*\)\.o[ :]*,\1.o : $@ ,g' < $@ > $@.$$$$; \
+	@set -e; \
+	g++ -MM $(flags) $< > $@.$$$$; \
 	sed 's,$(*F).o,$*.o,g' < $@.$$$$ > $@; \
 	echo '	@echo "Compiling [$(*F).o] ..." '>> $@; \
 	echo '	@g++ -c $< -o $(@:.d=.o) $(flags)' >> $@; \
-	rm -f $@.$$$$
-include $(dependencies)
+	cat $@ >> dependencies.d; \
+	rm -f $@.$$$$; rm -f $@
+
+cleand:
+	@echo "Cleaning dependencies ..."; \
+	rm -f dependencies.d; \
+	echo "Collecting dependencies ..."
+
+dependencies.d : cleand $(dependencies)
+include dependencies.d
+
+debug:
+	@echo 'hi'
 
 API : $(src_TaskAPI:.cpp=.o) $(src_shared:.cpp=.o)
 	@echo 'Linking [TaskAPI] ...'; \
@@ -40,6 +50,3 @@ TaskManager : $(src_TaskManager:.cpp=.o) $(src_shared:.cpp=.o)
 clean :
 	@echo 'Cleaning object files ...'; \
 	rm -f $(objects)
-
-cleand:
-	rm -f $(dependencies)
