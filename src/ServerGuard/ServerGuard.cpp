@@ -45,7 +45,7 @@ void unzip_and_make(const string& zip_path) {
 	systemf("unzip %s -d tmp", zip_path.c_str());
 	printf("Package unziped.\n");
 	chdir("tmp");
-	make("makefile", "client_stub");
+	make("makefile", "main");
 	chdir("..");
 }
 

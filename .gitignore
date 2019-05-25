@@ -1,4 +1,6 @@
 build/*
 *.socket
+*.d
+*.o
 _test_*
 tmp.*
