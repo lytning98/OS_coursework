@@ -36,7 +36,10 @@ static string get_signature() {
     return  ret.substr(0, 90);
 }
 
+int shmid_top = 0;
 bool initialize() {
+    srand(time(NULL));
+    shmid_top = rand();
     string sign = get_signature();
     string socket_file = string(SOCKET_FILE) + sign;
     string socket_client_file = string(SOCKET_CLIENT_FILE) + sign;
@@ -63,7 +66,9 @@ void quit() {
 std::string request_data(const char* mem_name) {
     msgpack pack(UDPMsg::REQUEST_DATA);
     strcpy(pack.mem_name, mem_name);
-    udp.send(pack);
+    if(!udp.send(pack)) {
+        return "";
+    }
     recv(pack, UDPMsg::RESULTS);
     if(pack.errcode) {
         return "";
@@ -89,10 +94,12 @@ int write_named_mem(const char* mem_name, const void* data, size_t size) {
     if(size == 0) {
         throw "Size of named memory blocks must be greater than zero.";
     }
-    int shm_id = time(NULL);
-    void* shm_ptr = create_shm(shm_id, size);
+    int shm_id = ++shmid_top, shm_handle;
+    void* shm_ptr = create_shm(shm_id, size, shm_handle);
+    if(shm_ptr == nullptr) {
+        return 4;  
+    }
     memcpy(shm_ptr, data, size);
-
     msgpack pack(UDPMsg::WRITE_NAMED_MEM);
     strcpy(pack.mem_name, mem_name);
     pack.mem_size = size;
@@ -100,7 +107,7 @@ int write_named_mem(const char* mem_name, const void* data, size_t size) {
     udp.send(pack);
     recv(pack, UDPMsg::RESULTS);
     unmap_shm(shm_ptr);
-    del_shm(shm_id);
+    del_shm(shm_handle);
     return pack.errcode;
 }
 

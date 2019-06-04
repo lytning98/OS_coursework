@@ -48,7 +48,7 @@ public:
     [return] : 成功(true)或否, 出错时设置 errno             */
     template<typename T>
     bool recv(T& data) {
-        return this-recv(&data, sizeof(data));
+        return this->recv(&data, sizeof(data));
     }
 
 /*  初始化, 建立 socket 完成 bind

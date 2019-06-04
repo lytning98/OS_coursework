@@ -78,14 +78,20 @@ bool init_process(const char* filename) {
 	}
 }
 
+int shmid_top = 0;
+
 /*
 -	向 Task 传输数据
 	[ptr_void]	数据缓冲区指针
 	[size]		数据大小
 */
 bool trans_to_task(const void* ptr_void, size_t size) {
-	int shm_id = time(NULL);
-	void* shm_ptr = create_shm(shm_id, size);
+	int shm_id = ++shmid_top, shm_handle;
+	void* shm_ptr = create_shm(shm_id, size, shm_handle);
+	if(shm_ptr == nullptr) {
+		perror("Shared memory creating failed :");
+		return false;
+	}
 	memcpy(shm_ptr, ptr_void, size);
 
 	msgpack pack(UDPMsg::REQUEST_DONE);
@@ -97,7 +103,7 @@ bool trans_to_task(const void* ptr_void, size_t size) {
 	}
 	recv(udp, pack, UDPMsg::TRANS_DONE);
 	unmap_shm(shm_ptr);
-	del_shm(shm_id);
+	del_shm(shm_handle);
 	return true;
 }
 
@@ -232,7 +238,7 @@ bool watch_process(){
 		switch(pack.type){
 			case UDPMsg::QUIT:
 				tcp.send(packet(TCPMsg::TASK_DONE));
-				system("rm -rf tmp");
+				// system("rm -rf tmp");
 				return true;
 			case UDPMsg::REQUEST_DATA:
 				handle_request_data(pack);
@@ -293,6 +299,9 @@ string get_signature() {
 }
 
 int main(int argc, char** argv){
+	srand(time(NULL));
+	shmid_top = rand();
+
 	if(argc == 3) {
 		tcp = TCPSocket(argv[1], atoi(argv[2]));
 	} else {

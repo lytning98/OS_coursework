@@ -50,22 +50,23 @@ const char* SOCKET_CLIENT_FILE = "task.client";
 const int SHM_BUF_SIZE = 10240;
 
 // 共享内存操作的辅助函数
-inline void* _get_shm_ptr(int shm_id, size_t size, int flag) {
-	int hShm = shmget(shm_id, size, flag);
+inline void* _get_shm_ptr(int shm_id, size_t size, int flag, int& hShm) {
+	hShm = shmget(shm_id, size, flag);
 	if(hShm == -1)  return nullptr;
 	else            return shmat(hShm, NULL, 0);
 }
 
 /*	创建共享内存区
 	[shm_id, size]	ID 和大小							*/
-inline void* create_shm(int shm_id, size_t size) {
-	return _get_shm_ptr(shm_id, size, IPC_CREAT | 0666);
+inline void* create_shm(int shm_id, size_t size, int& handle) {
+	return _get_shm_ptr(shm_id, size, IPC_CREAT | 0666, handle);
 }
 
 /*	获取共享内存区
 	[shm_id, size]	ID 和大小							*/
 inline void* get_shm(int shm_id, size_t size) {
-	return _get_shm_ptr(shm_id, size, 0);
+	static int stub;
+	return _get_shm_ptr(shm_id, size, 0, stub);
 }
 
 /*	卸载共享内存区
